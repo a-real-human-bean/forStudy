@@ -33,15 +33,23 @@ class Main extends React.Component {
        newParams.r = this.state.r
        newParams.l = this.state.l
        newParams.D = this.state.D
+       newParams.U_pr = this.state.U_pr
+       newParams.U_r = this.state.U_r
+       newParams.U12 = this.state.U12
+       newParams.w1 = this.state.w1
+       newParams.w2 = this.state.w2 //w2 = w_kr - скорость вращения кривошипа
+       newParams.VBf = this.state.VBf
+       newParams.VCf = this.state.VCf
     }
-    const {S0, r, l , D} = newParams
+    const {S0, l, r, D, VBf, VCf, U_pr, U_r, U12, w1, w2} = newParams
     return (
       <div className="main">
         <div className="mainInfo">
           <Parametrs  params={{w_el, U_rp, V_sr, w_kr, S0toD, lambda, pressure, delta}}/>
           <KinematicSynthesis params={{w_kr, V_sr, lambda, S0toD}} onUpdateParams={this.updateParams}/>
           <KinematicTransmissionAnalysis params={{w_el, w_kr, U_rp}} onUpdateParams={this.updateParams}/>
-          <KinematicCompressorAnalysis params={{w_kr, r, lambda}}/>
+          {newParams.r ? <KinematicCompressorAnalysis params={{w_kr, r, lambda}} onUpdateParams={this.updateParams}/> : null} {/*Компонент отрисовывается только после появления новых значений в state*/}
+          {newParams.r ? <MomentsDetermination params={{VBf, VCf, pressure, D, w2}}/> : null}
         </div>
       </div>
     )
@@ -158,7 +166,13 @@ class KinematicTransmissionAnalysis extends React.Component{ //Кинемати�
 }
 
 class KinematicCompressorAnalysis extends React.Component {
-  createTable =() => {
+  constructor(props) {
+    super(props)
+    this.state = ({
+      result : this.createTable()
+    })
+  }
+  createTable = () => {
     let table = [<tr key="1">
       <td>φ, град</td>
       <td>Vb(φ), м/с</td>
@@ -167,6 +181,8 @@ class KinematicCompressorAnalysis extends React.Component {
       <td>Vb2(φ), м/с</td>
     </tr>];
     const {r, w_kr, lambda} = this.props.params
+    const VBf = [];
+    const VCf = [];
     for (let i = 0; i <= 360; i += 15) {
       let children = [];
       for (let j = 0; j < 5; j++) {
@@ -175,27 +191,45 @@ class KinematicCompressorAnalysis extends React.Component {
             children.push(<td key={i + j}>{i}</td>) //Угол поворота кривошипа
             break;
           case 1:
-            children.push(<td key={i + j}>{((-r)*w_kr*(Math.sin((i * Math.PI)/180) + ((lambda / 2) * Math.sin(2 * (i * Math.PI)/180)))).toFixed(3)}</td>); //Угловая скорость первого ползуна
+            VBf.push(((-r)*w_kr*(Math.sin((i * Math.PI)/180) + ((lambda / 2) * Math.sin(2 * (i * Math.PI)/180)))).toFixed(3))
+            children.push(<td key={i + j}>{VBf[VBf.length - 1]}</td>); //Угловая скорость первого ползуна
             break;
           case 2:
-            children.push(<td key={i + j}>{((-r)*w_kr*(Math.sin(((i + 90) * Math.PI)/180) + ((lambda / 2) * Math.sin(2 * (((i + 90) * Math.PI)/180))))).toFixed(3)}</td>); //Угловая скорость второго ползуна
+            VCf.push(((-r)*w_kr*(Math.sin(((i + 90) * Math.PI)/180) + ((lambda / 2) * Math.sin(2 * (((i + 90) * Math.PI)/180))))).toFixed(3))
+            children.push(<td key={i + j}>{VCf[VCf.length - 1]}</td>); //Угловая скорость второго ползуна
             break;
           case 3:
             children.push(<td key={i + j}>{(-r * w_kr * Math.sin((i * Math.PI)/180)).toFixed(3)}</td>);
             break;
           case 4:
             children.push(<td key={i + j}>{(-r * w_kr * (lambda / 2) * Math.sin(2 * (i * Math.PI)/180)).toFixed(3)}</td>)
+            break;
+          default:
+            break
         }
       }
       table.push(<tr key={i - 1}>{children}</tr>)
     }
-
-    return table;
+    return {
+      table: table,
+      VBf: ["VBf", VBf],
+      VCf: ["VCf", VCf]
+    }
   }
   render() {
     const {r, w_kr, lambda} = this.props.params
+    const {result} = this.state
+    const update = () => {
+      for (let key in this.state) {
+        for (let i in this.state[key]) {
+          if ([i] !== "table") {
+            this.props.onUpdateParams(this.state[key][i][0], this.state[key][i][1]) //Передаем значения родителю
+          }
+        }
+      }
+    }
     return (
-      <div className="kinCompressorAnalysis">
+      <div className="kinCompressorAnalysis" onLoad={update}>
         <h2>5.4 Кинематический анализ механизма компрессора</h2>
         <p>Скорость движения первого и второго ползуна может быть найдена по следующим формулам:</p>
         <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/VB.png" alt="скорость движения первого ползуна"></img>
@@ -212,15 +246,69 @@ class KinematicCompressorAnalysis extends React.Component {
         <p className="result">VB(φ) = {((-r)*w_kr*(Math.sin((90 * Math.PI)/180) + ((lambda / 2) * Math.sin(2 * (90 * Math.PI)/180)))).toFixed(3)}</p>
         <p className="result">VC(φ) = {((-r)*w_kr*(Math.sin((180 * Math.PI)/180) + ((lambda / 2) * Math.sin(2 * (180 * Math.PI)/180)))).toFixed(3)}</p>
         <p className="result">VB1(φ) = {(-r * w_kr * Math.sin((90 * Math.PI)/180)).toFixed(3)}</p>
-        <p className="result">VB2(φ) = {(-r * w_kr * (lambda / 2) * Math.sin(2 * (90 * Math.PI)/180)).toFixed(3)}</p>
-        <p>Выполним расчеты VB (φ), VC (φ), VB1 (φ), VB2 (φ) при значениях угла поворота φ, изменяющимся от 0° до 360°:</p>
-        <table className="kinCompressorTable">
+        <p className="result">VB2(φ) = {(-r * w_kr * (lambda / 2) * Math.sin(2 * (90 * Math.PI  )/180)).toFixed(3)}</p>
+        <p>Выполним расчеты VB (φ), VC (φ), VB1 (φ), VB2 (φ) при значениях угла поворота φ кривошипа, изменяющимся от 0° до 360°:</p>
+        <table className="resultTable">
           <tbody>
-            {this.createTable()}
+            {result.table}
           </tbody>
         </table>
         <p>Пример графика зависимости скорости первого ползуна от угла поворота кривошипа:</p>
         <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/graphVB.png" alt="зависимость скорости первого ползуна от угла поворота кривошипа"></img>
+      </div>
+    )
+  }
+}
+
+class MomentsDetermination extends React.Component {
+  constructor(props) {
+    super(props)
+    this.state = ({
+      result: this.createTable()
+    })
+  }
+
+  createTable = () => {
+    let table = [<tr key="1">
+      <td>φ, град</td>
+      <td>Tпр.1(φ), Н*м</td>
+      <td>Tпр.2(φ), Н*м</td>
+      <td>Tпр.Σ(φ), Н*м</td>
+    </tr>];
+    for (let i = 0; i <= 360; i += 15) {
+      let children = [];
+      for (let j = 0; j < 4; j++) {
+        switch (j) {
+          case 0:
+            children.push(<td key={i + j}>{i}</td>)
+            break;
+          case 1:
+            break;
+          case 2:
+            break;
+          case 3:
+            break;
+          case 4:
+        }
+      }
+      table.push(<tr key={i - 1}>{children}</tr>)
+    }
+
+    return {
+      table: table
+    };
+  }
+
+  render() {
+    const w_kr = this.props.params.w2 //Они равны - скорость вращения кривошипа(тихоходного вала)
+    const {pressure, D, VBf, VCf} = this.props.params //Будем использовать VBf[4] и VCf[4] - скорости ползунов при угле поворота кривошипа равном 60 градусов
+    return (
+      <div className="momentsDetermination">
+        <table className="resultTable">
+          <tbody>
+            {this.state.result.table}
+          </tbody>
+        </table>
       </div>
     )
   }
