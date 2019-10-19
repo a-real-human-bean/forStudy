@@ -1,6 +1,11 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
+import engines from "./engines.json"
+let x = 74.3
+/*
+  "0" - Синхронная частота вращения 3000 об/мин
+*/
 
 class Header extends React.Component {
   render() {
@@ -40,8 +45,13 @@ class Main extends React.Component {
        newParams.w2 = this.state.w2 //w2 = w_kr - скорость вращения кривошипа
        newParams.VBf = this.state.VBf
        newParams.VCf = this.state.VCf
+       newParams.TprCycle = this.state.TprCycle
+       newParams.n = this.state.n
+       newParams.J = this.state.J
+       newParams.d = this.state.d
+       newParams.P_engine = this.state.P_engine
     }
-    const {S0, l, r, D, VBf, VCf, U_pr, U_r, U12, w1, w2} = newParams
+    const {S0, l, r, D, VBf, VCf, U_pr, U_r, U12, w1, w2, TprCycle, n, P_engine, J, d} = newParams
     return (
       <div className="main">
         <div className="mainInfo">
@@ -49,7 +59,9 @@ class Main extends React.Component {
           <KinematicSynthesis params={{w_kr, V_sr, lambda, S0toD}} onUpdateParams={this.updateParams}/>
           <KinematicTransmissionAnalysis params={{w_el, w_kr, U_rp}} onUpdateParams={this.updateParams}/>
           {newParams.r ? <KinematicCompressorAnalysis params={{w_kr, r, lambda}} onUpdateParams={this.updateParams}/> : null} {/*Компонент отрисовывается только после появления новых значений в state*/}
-          {newParams.r ? <MomentsDetermination params={{VBf, VCf, pressure, D, w2}}/> : null}
+          {newParams.VBf ? <MomentsDetermination params={{VBf, VCf, pressure, D, w2}} onUpdateParams={this.updateParams}/> : null}
+          {newParams.TprCycle ? <EngineDetermination params={{TprCycle, w2, w_el}} onUpdateParams={this.updateParams}/> : null}
+          {newParams.n ? <ShaftDinamicCalculation params={{n, U_rp, U_r}}/> : null}
         </div>
       </div>
     )
@@ -222,14 +234,14 @@ class KinematicCompressorAnalysis extends React.Component {
     const update = () => {
       for (let key in this.state) {
         for (let i in this.state[key]) {
-          if ([i] !== "table") {
+          if (i !== "table") {
             this.props.onUpdateParams(this.state[key][i][0], this.state[key][i][1]) //Передаем значения родителю
           }
         }
       }
     }
     return (
-      <div className="kinCompressorAnalysis" onLoad={update}>
+      <div className="kinCompressorAnalysis paragraph" onLoad={update}>
         <h2>5.4 Кинематический анализ механизма компрессора</h2>
         <p>Скорость движения первого и второго ползуна может быть найдена по следующим формулам:</p>
         <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/VB.png" alt="скорость движения первого ползуна"></img>
@@ -263,30 +275,45 @@ class KinematicCompressorAnalysis extends React.Component {
 class MomentsDetermination extends React.Component {
   constructor(props) {
     super(props)
+    const {pressure, D, Vbf, VCf} = this.props.params
     this.state = ({
-      result: this.createTable()
+      F: ["F", (pressure * (10 ** 6) * (Math.PI*(D**2) / 4)).toFixed(3)],
+      result: this.createTable(),
+      TprCycle: ["TprCycle", (this.createTable().TprSum[1].slice(0, 24).reduce((a, b) => +a + +b) / 24).toFixed(3)]
     })
   }
 
   createTable = () => {
-    let table = [<tr key="1">
+    let table = [<tr key="100">
       <td>φ, град</td>
       <td>Tпр.1(φ), Н*м</td>
       <td>Tпр.2(φ), Н*м</td>
       <td>Tпр.Σ(φ), Н*м</td>
     </tr>];
-    for (let i = 0; i <= 360; i += 15) {
+    const w_kr = this.props.params.w2 //скорость вращения тихоходного вала и скорость вращения кривошипа равны
+    const {pressure, D, VCf, VBf} = this.props.params
+    const F = (pressure * (10 ** 6) * (Math.PI*(D**2) / 4)).toFixed(3)
+    const Tpr1 = [];
+    const Tpr2 = [];
+    const TprSum = [];
+    for (let i = 0; i <= 24; i++) {
       let children = [];
       for (let j = 0; j < 4; j++) {
         switch (j) {
           case 0:
-            children.push(<td key={i + j}>{i}</td>)
+            children.push(<td key={i + j }>{i *15}</td>)
             break;
           case 1:
+            Tpr1.push((F * Math.abs(VBf[i])  / w_kr).toFixed(3))
+            children.push(<td key={i + j}>{Tpr1[i]}</td>)
             break;
           case 2:
+            Tpr2.push((F * Math.abs(VCf[i])  / w_kr).toFixed(3))
+            children.push(<td key={i + j}>{Tpr2[i]}</td>)
             break;
           case 3:
+            TprSum.push((+Tpr1[i] + +Tpr2[i]).toFixed(3))
+            children.push(<td key={i + j}>{TprSum[i]}</td>)
             break;
           case 4:
         }
@@ -295,20 +322,196 @@ class MomentsDetermination extends React.Component {
     }
 
     return {
-      table: table
+      table: table,
+      Tpr1 : ["Tpr1", Tpr1],
+      Tpr2 : ["Tpr2", Tpr2],
+      TprSum : ["TprSum", TprSum]
     };
+  }
+  update = () => {
+    console.log("sd")
+    for (let key in this.state) {
+      console.log(this.state[key])
+      for (let i in this.state[key]) {
+        if (i !== "table") {
+          this.props.onUpdateParams(this.state[key][i][0], this.state[key][i][1]) //Передаем значения родителю
+        }
+      }
+    }
+  }
+  componentDidMount() {
+    for (let key in this.state) {
+      if (key === "result") {
+        for (let i in this.state[key]) {
+          if (i !== "table") {
+            this.props.onUpdateParams(this.state[key][i][0], this.state[key][i][1]) //Передаем значения родителю
+          }
+        }
+      } else {
+          this.props.onUpdateParams(this.state[key][0], this.state[key][1]) //Передаем значения родителю
+      }
+    }
   }
 
   render() {
-    const w_kr = this.props.params.w2 //Они равны - скорость вращения кривошипа(тихоходного вала)
-    const {pressure, D, VBf, VCf} = this.props.params //Будем использовать VBf[4] и VCf[4] - скорости ползунов при угле поворота кривошипа равном 60 градусов
+    const {F, result, TprCycle} = this.state
     return (
-      <div className="momentsDetermination">
+      <div className="momentsDetermination paragraph">
+        <h2>6.1 Определение приведенных моментов сил производственных сопротивлений</h2>
+        <p>Силами производственных сопротивлений являются силы давления воздуха в цилиндрах компрессора на поршни при прямых и обратных ходах. Они характеризуются средним постоянным удельным давлением P.</p>
+        <p>Сила постоянного давления F на поршень определяется по формуле:</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/F.png" alt="сила постоянного давления"></img>
+        <p className="result">F = {F[1]}</p>
+        <p>где (πD^2)/4 – площадь поршня компрессора, D – диаметр поршня, P – среднее удельное давление.</p>
+        <br />
+        <p>Определим приведенные моменты сил Tпр.1(φ) для первого КПМ и Tпр.2(φ) для второго КПМ.</p>
+        <p>При изменении направления скорости движения поршня изменяется и направление силы давления на поршень. Однако, учитывая, что оба хода поршня являются рабочими, при определении приведенных моментов принимаются абсолютные значения скорости и силы давления на поршень.</p>
+        <p>Значения приведенных моментов сил определим по формулам:</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/Tpr12.png" alt="приведенные моменты сил"></img>
+        <p>При определении приведенных моментов сил Tпр.1(φ) и Tпр.2(φ) пренебрегаем силами тяжести звеньев, в силу их малости по сравнению с силами давления воздуха на поршни компрессора.</p>
+        <p>Суммарный приведенный момент сил производственных сопротивлений для каждого значения угла φ поворота кривошипа представляет собой сумму приведенных моментов сил давления воздуха на поршни двух КПМ:</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/TprSum.png" alt="сумма приведенных моментов сил"></img>
+        <p>Пример:</p>
+        <p>При φ = 60°</p>
+        <p className="result">Tпр.1(φ) = {result.Tpr1[1][4]} Н*м</p>
+        <p className="result">Tпр.2(φ) = {result.Tpr2[1][4]} Н*м</p>
+        <p className="result">Tпр.Σ(φ) = {result.TprSum[1][4]} Н*м</p>
+        <p>Выполним расчеты Tпр.Σ(φ), Tпр.1(φ), Tпр.2(φ) при значениях угла поворота φ кривошипа, изменяющимся от 0° до 360°: </p>
         <table className="resultTable">
           <tbody>
             {this.state.result.table}
           </tbody>
         </table>
+        <p>Значение Tпр.Σ(φ) за один цикл движения определяется по формуле:</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/TprSumCycle.png" alt="сумма приведенных моментов сил за один цикл"></img>
+        <p className="result">Tпр.Σ = {TprCycle[1]} Н*м</p>
+        <p>Построим диаграмму приведенных моментов при изменении угла поворота кривошипа в пределах от 0° до 360°:</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/graphTpr.png" alt="график приведенного момента"></img>
+      </div>
+    )
+  }
+}
+
+class EngineDetermination extends React.Component {
+  constructor (props) {
+    super(props)
+    const {TprCycle, w2, w_el} = this.props.params
+    const nel = (w_el * 60 / (2*Math.PI)).toFixed(3) //Угловую скорость вращения ротора электродвигателя переводим в об/мин из рад/с
+    let engineGroup //Группа двигателей в каталоге в зависимости оч скорости вращения ротора
+    let P_nominal //Номинальная мощность электродвигателя
+    let engine //Параметры найденного двигателя, определяются ниже в цикле
+    const Psp = (TprCycle * w2 / 1000).toFixed(3) //Мощность сил производственных
+    const Psd = ((TprCycle * w2 / 1000)/(0.94 * 0.96 * 0.9 * 0.98)).toFixed(3) //Мощность сил движущих
+    const Pel = (1.2 * (TprCycle * w2 / 1000)/(0.94 * 0.96 * 0.9 * 0.98)).toFixed(3) //Минимальная мощность электродвигателя (нужен элетродвигатель с мощностью больше чем это число)
+
+    if (nel <= 500) {
+      engineGroup = "5";
+    } else if (nel <= 600) {
+      engineGroup = "4";
+    } else if (nel <= 750) {
+      engineGroup = "3";
+    } else if (nel <= 1000) {
+      engineGroup = "2";
+    } else if (nel <= 1500) {
+      engineGroup = "1";
+    } else if (nel <= 3000) {
+      engineGroup = "0";
+    }
+
+    for (let key in engines[engineGroup]){ //!НЕ СТИРАТЬ, ЭТО ПОДСКАЗКА!
+      if (Pel <= key) {
+        P_nominal = key;
+        engine = engines[engineGroup][P_nominal];
+        break;
+      }
+    }
+
+    this.state = ({
+      Psp: ["Psp", Psp],
+      Psd: ["Psd", Psd],
+      Pel: ["Pel", Pel],
+      engineName: ["engineName", engine[0]], //Марка двигателя
+      P_engine: ["P_engine", Number(engine[1])], //Мощность двигателя
+      n: ["n", Number(engine[2])], //Номинальная скорость вращения ротора двигателя
+      J: ["J", Number(engine[3])], //Момент инерции вращения ротора двигателя
+      d: ["d", Number(engine[4])] //Диаметр выходного вала двигателя
+    })
+  }
+
+  componentDidMount () {
+    for (let key in this.state) {
+      this.props.onUpdateParams(this.state[key][0], this.state[key][1]) //Передаем значения родителю
+    }
+  }
+
+  render() {
+    const {Psp, Psd, Pel, engineName, P_engine, n, J, d} = this.state
+    return (
+      <div className="engineDetermination paragraph">
+        <h2>6.2 Определение мощности сил движущих и подбор элек-тродвигателя</h2>
+        <p>Мощность сил движущих определим по формуле:</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/Psd.png" alt="мощность сил движущих"></img>
+        <p>Где Pсп – мощность сил производственных сопротивлений, развиваемая поршнем компрессора:</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/Psp.png" alt="мощность сил производственных сопротивлений"></img>
+        <p className="result">Pсп = {Psp[1]} кВт</p>
+        <p>ηагр – КПД машинного агрегата без учета потерь в двигателе (собственные потери двигателя учитываются в его выходных параметрах).</p>
+        <p>КПД агрегата оценивается приблизительно с учетом типа соединения редуктора и компрессора:</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/Efficiency.png" alt="КПД"></img>
+        <p>где  ηрп – КПД ременной передачи, η_рп = 0,92...0,96;</p>
+        <p>η_р – КПД редуктора (для цилиндрического редуктора η_р = 0,96);</p>
+        <p>η_к – КПД компрессора (при параллельном соединении кривошипно-ползунных механизмов насоса η_к = 0,9);</p>
+        <p>η_м – КПД соединительной муфты, η_м = 0,98;</p>
+        <p>Отсюда:</p>
+        <p className="result">ηагр = {(0.94 * 0.96 * 0.9 * 0.98).toFixed(3)}</p>
+        <p>Тогда:</p>
+        <p className="result">Pсд = {Psd[1]} кВт</p>
+        <p>Требуемая мощность электродвигателя рассчитывается по формуле:</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/Pel.png" alt="требуемая мощность электродвигателя"></img>
+        <p className="result">Pэл = {Pel[1]} кВт</p>
+        <p>По мощности Pэл и заданной угловой скорости вращения wэл выберем электродвигатель из каталога:</p>
+        <br />
+        <p>Электродвигатель <strong>{engineName[1]}</strong></p>
+        <p>Номинальная мощность P = {P_engine[1]} кВт</p>
+        <p>Частота вращения вала n = {n[1]} об/мин</p>
+        <p>Момент инерции ротора J = {J[1]} кг*м^2</p>
+        <p>Диаметр выходного вала d = {d[1]} мм</p>
+      </div>
+    )
+  }
+}
+
+class ShaftDinamicCalculation extends React.Component {
+  constructor(props) {
+    super(props)
+    const {n, U_rp, U_r} = this.props.params
+    const n_b = (n / U_rp).toFixed(3) //Частота вращения быстроходного вала
+    const n_t = (n_b / U_r).toFixed(3) //Частота вращения тихоходного вала
+
+    this.state = ({
+      n_b: ["n_b", n_b],
+      n_t: ["n_t", n_t]
+    })
+  }
+
+  //Заморозил, т.к. не уверен что это пригодится дальше
+  //Если оно здесь, значит я об этом забыл ('~')
+  /*componentDidMount() {
+    for (let key in this.state) {
+      this.props.onUpdateParams(this.state[key][0], this.state[key][1]) //Передаем значения родителю
+    }
+  }*/
+
+  render() {
+    const {n_b, n_t} = this.state
+    return (
+      <div className="shaftDinamicCalculation paragraph">
+        <h2>6.3 Динамический расчет валов</h2>
+        <p>Частота вращения быстроходного вала:</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/n_b.png" alt="частота вращения быстроходного вала"></img>
+        <p className="result">nб = {n_b[1]} об/мин</p>
+        <p>Частота вращения тихоходного вала:</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/n_t.png" alt="частота вращения тихоходного вала"></img>
+        <p className="result">nт = {n_t[1]} об/мин</p>
       </div>
     )
   }
