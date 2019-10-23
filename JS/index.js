@@ -50,8 +50,10 @@ class Main extends React.Component {
        newParams.J = this.state.J
        newParams.d = this.state.d
        newParams.P_engine = this.state.P_engine
+       newParams.Psd = this.state.Psd
+       newParams.T2 = this.state.T2
     }
-    const {S0, l, r, D, VBf, VCf, U_pr, U_r, U12, w1, w2, TprCycle, n, P_engine, J, d} = newParams
+    const {S0, l, r, D, VBf, VCf, U_pr, U_r, U12, w1, w2, TprCycle, n, P_engine, J, d, Psd, T2} = newParams
     return (
       <div className="main">
         <div className="mainInfo">
@@ -61,7 +63,8 @@ class Main extends React.Component {
           {newParams.r ? <KinematicCompressorAnalysis params={{w_kr, r, lambda}} onUpdateParams={this.updateParams}/> : null} {/*Компонент отрисовывается только после появления новых значений в state*/}
           {newParams.VBf ? <MomentsDetermination params={{VBf, VCf, pressure, D, w2}} onUpdateParams={this.updateParams}/> : null}
           {newParams.TprCycle ? <EngineDetermination params={{TprCycle, w2, w_el}} onUpdateParams={this.updateParams}/> : null}
-          {newParams.n ? <ShaftDinamicCalculation params={{n, U_rp, U_r}}/> : null}
+          {newParams.n ? <ShaftDinamicCalculation params={{n, U_rp, U_r, Psd}} onUpdateParams={this.updateParams}/> : null}
+          {newParams.T2 ? <WorkingStressDetermination params={{U_r, T2}} onUpdateParams={this.updateParams}/> : null}
         </div>
       </div>
     )
@@ -385,7 +388,7 @@ class MomentsDetermination extends React.Component {
         <p>Значение Tпр.Σ(φ) за один цикл движения определяется по формуле:</p>
         <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/TprSumCycle.png" alt="сумма приведенных моментов сил за один цикл"></img>
         <p className="result">Tпр.Σ = {TprCycle[1]} Н*м</p>
-        <p>Построим диаграмму приведенных моментов при изменении угла поворота кривошипа в пределах от 0° до 360°:</p>
+        <p>Примерный вид диаграммы приведенных моментов при изменении угла поворота кривошипа в пределах от 0° до 360°:</p>
         <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/graphTpr.png" alt="график приведенного момента"></img>
       </div>
     )
@@ -483,26 +486,27 @@ class EngineDetermination extends React.Component {
 class ShaftDinamicCalculation extends React.Component {
   constructor(props) {
     super(props)
-    const {n, U_rp, U_r} = this.props.params
+    const {n, U_rp, U_r, Psd} = this.props.params
     const n_b = (n / U_rp).toFixed(3) //Частота вращения быстроходного вала
     const n_t = (n_b / U_r).toFixed(3) //Частота вращения тихоходного вала
-
+    const T2 = (Psd * 9550 / n_t).toFixed(3) //Вращающий момент на ведомом валу редуктора
+    const T1 = (T2 / U_r).toFixed(3) //Вращающий момент на ведущем валу редуктора
     this.state = ({
       n_b: ["n_b", n_b],
-      n_t: ["n_t", n_t]
+      n_t: ["n_t", n_t],
+      T1: ["T1", T1],
+      T2: ["T2", T2]
     })
   }
 
-  //Заморозил, т.к. не уверен что это пригодится дальше
-  //Если оно здесь, значит я об этом забыл ('~')
-  /*componentDidMount() {
+  componentDidMount() {
     for (let key in this.state) {
       this.props.onUpdateParams(this.state[key][0], this.state[key][1]) //Передаем значения родителю
     }
-  }*/
+  }
 
   render() {
-    const {n_b, n_t} = this.state
+    const {n_b, n_t, T1, T2} = this.state
     return (
       <div className="shaftDinamicCalculation paragraph">
         <h2>6.3 Динамический расчет валов</h2>
@@ -512,6 +516,85 @@ class ShaftDinamicCalculation extends React.Component {
         <p>Частота вращения тихоходного вала:</p>
         <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/n_t.png" alt="частота вращения тихоходного вала"></img>
         <p className="result">nт = {n_t[1]} об/мин</p>
+        <p>Найдем вращающий момент на ведомом валу редуктора:</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/T2.png" alt="вращающий момент на ведомом валу редуктора"></img>
+        <p className="result">T2 = {T2[1]} Н*м</p>
+        <p>Найдем вращающий момент на ведущем валу редуктора:</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/T1.png" alt="вращающий момент на ведущем валу редуктора"></img>
+        <p className="result">T1 = {T1[1]} Н*м</p>
+      </div>
+    )
+  }
+}
+
+class WorkingStressDetermination extends React.Component {
+  constructor(props) {
+    super(props)
+
+    const a_w_array = [40, 50, 63, 71, 80, 90, 100, 112, 125, 140, 160, 180, 200, 224, 250, 280,
+    315, 355, 400, 450, 500, 560, 630, 710, 800, 900, 1000, 1120, 1250, 1400, 1600, 1800, 2000,
+    2240, 2500]
+
+    const {T2, U_r} = this.props.params
+
+    const L = 10000
+    const sigma_n_lim = 2 * 225 + 70
+    const Zn = 1
+    const Sn = 1.1
+    const sigma_n = (sigma_n_lim * Zn / Sn).toFixed(3)
+    const psi_ba = 0.4
+    const Knb = 1.25
+    const Ka = 430
+
+    let a_w = (Ka*(U_r + 1)*Math.pow((T2*Knb)/(Math.pow(sigma_n, 2)*U_r*psi_ba),(1/3))).toFixed(3)
+    const a_w_before = a_w
+    for (let i = 0; i < a_w_array.length; i++) {
+      if (a_w <= a_w_array[i]) {
+        if (a_w - a_w_array[i - 1] < (a_w_array[i] - a_w_array[i - 1]) / 2) {
+          a_w = a_w_array[i - 1];
+        } else {
+          a_w = a_w_array[i];
+        }
+        break;
+      }
+
+    }
+    this.state = ({
+      sigma_n_lim: ["sigma_n_lim", sigma_n_lim],
+      sigma_n: ["sigma_n", sigma_n],
+      a_w_before: ["a_w_before", a_w_before],
+      a_w: ["a_w", a_w]
+    })
+  }
+  render() {
+    const {sigma_n_lim, sigma_n, a_w, a_w_before} = this.state
+    return (
+      <div className="workingStressDetermination paragraph">
+        <h2>7.1 Определение допускаемых напряжений</h2>
+        <p>При расчетах параметров редуктора следует принимать:</p>
+        <ul>
+          <li>Материал зубчатых колес – сталь 45;</li>
+          <li>Термообработка зубчатых колес – нормализация или улучшение, обеспечивающая твердость по Бринелю HB = 200…250; временное сопротивление σB=800…900 МПа;</li>
+          <li>Долговечность L=10000 ч;</li>
+        </ul>
+        <p>Расчет зубчатых колес редуктора проводится из условий обеспече-ния прочности зубьев по контактным напряжениям:</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/sigma_n1.png" alt="контактные напряжения"></img>
+        <p>Допускаемые контактные напряжения при расчете на выносливость:</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/sigma_n2.png" alt="допускаемые контактные напряжения"></img>
+        <p>где σнlim – предел контактной выносливости поверхностей зубьев;</p>
+        <p>Sн – коэффициент безопасности;</p>
+        <p>Zн – коэффициент долговечности;</p>
+        <p>Приближенное значение предела контактной выносливости при заданной твердости поверхности зубьев 2HB ≤350 определяют из выражения:</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/sigma_n_lim.png" alt="предел контактной выносливости"></img>
+        <p className="result">σнlim = {sigma_n_lim[1]}</p>
+        <p>При заданной долговечности редуктора L величина Zн=1. При нормализации или улучшении рекомендуется значение Sн=1,1. Отсюда:</p>
+        <p className="result">[σн] = {sigma_n[1]} Мпа</p>
+        <p>Примем коэффициент ширины венца ψba=0,4, а коэффициент, учитывающий неравномерность распределения нагрузки по ширине венца Kнβ=1,25.</p>
+        <p>Определим межосевое расстояние из условия контактной выносливо-сти активных поверхностей зубьев по формуле:</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/a_w.png" alt="предел контактной выносливости"></img>
+        <p>Для косозубых передач Ka=43.</p>
+        <p className="result">aw = {a_w_before[1]} мм</p>
+        <p>Ближайшее значение межосевого расстояния по ГОСТ 2185-66 aw = {a_w[1]} мм.</p>
       </div>
     )
   }
