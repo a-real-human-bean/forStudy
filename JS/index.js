@@ -20,21 +20,25 @@ class Header extends React.Component {
 }
 
 class Main extends React.Component {
-  state = {
-    w_el: 157, //Угловая скорость вращения ротора электродвигателя
-    U_rp: 3, //Передаточное отношение ременной передачи
-    V_sr: 1.2, //Средняя скорость поршня компрессора
-    w_kr: 14, //Угловая скорость вращения кривошипа
-    S0toD: 1, //Отношение хода поршня к диаметру поршня
-    lambda: 0.15, //Отношение длины кривошипа к длине шатуна
-    pressure: 0.32, //Среднее удельное давление на поршень компрессора
-    delta: 0.01 // Допускаемое значение коэффициента неравномерности вращения звена приведения
+  constructor(props){
+    super(props)
+    this.state = {
+
+    }
   }
   render() {
-    const {w_el, U_rp, V_sr, w_kr, S0toD, lambda, pressure, delta} = this.state
     const newParams = {} // Создаем список параметров для передачи их компонентам
-    if (this.state.S0) {
-       newParams.S0 = this.state.S0 //Объявляем новые параметры после их появления в state
+    if (this.state.w_el) {
+        //Объявляем новые параметры после их появления в state
+       newParams.w_el = this.state.w_el //Угловая скорость вращения ротора электродвигателя
+       newParams.U_rp = this.state.U_rp //Передаточное отношение ременной передачи
+       newParams.V_sr = this.state.V_sr //Средняя скорость поршня компрессора
+       newParams.S0toD = this.state.S0toD //Отношение длины кривошипа к длине шатуна
+       newParams.lambda = this.state.lambda //Отношение длины кривошипа к длине шатуна
+       newParams.w_kr = this.state.w_kr //Угловая скорость вращения кривошипа
+       newParams.pressure = this.state.pressure //Среднее удельное давление на поршень компрессора
+       newParams.delta = this.state.delta
+       newParams.S0 = this.state.S0
        newParams.r = this.state.r
        newParams.l = this.state.l
        newParams.D = this.state.D
@@ -53,18 +57,20 @@ class Main extends React.Component {
        newParams.Psd = this.state.Psd
        newParams.T2 = this.state.T2
     }
-    const {S0, l, r, D, VBf, VCf, U_pr, U_r, U12, w1, w2, TprCycle, n, P_engine, J, d, Psd, T2} = newParams
+    const {w_el, U_rp, V_sr, w_kr, S0toD, lambda, pressure, delta, S0, l, r, D, VBf, VCf, U_pr, U_r, U12, w1, w2, TprCycle, n, P_engine, J, d, Psd, T2} = newParams
     return (
       <div className="main">
         <div className="mainInfo">
-          <Parametrs  params={{w_el, U_rp, V_sr, w_kr, S0toD, lambda, pressure, delta}}/>
-          <KinematicSynthesis params={{w_kr, V_sr, lambda, S0toD}} onUpdateParams={this.updateParams}/>
-          <KinematicTransmissionAnalysis params={{w_el, w_kr, U_rp}} onUpdateParams={this.updateParams}/>
-          {newParams.r ? <KinematicCompressorAnalysis params={{w_kr, r, lambda}} onUpdateParams={this.updateParams}/> : null} {/*Компонент отрисовывается только после появления новых значений в state*/}
-          {newParams.VBf ? <MomentsDetermination params={{VBf, VCf, pressure, D, w2}} onUpdateParams={this.updateParams}/> : null}
-          {newParams.TprCycle ? <EngineDetermination params={{TprCycle, w2, w_el}} onUpdateParams={this.updateParams}/> : null}
-          {newParams.n ? <ShaftDinamicCalculation params={{n, U_rp, U_r, Psd}} onUpdateParams={this.updateParams}/> : null}
-          {newParams.T2 ? <WorkingStressDetermination params={{U_r, T2}} onUpdateParams={this.updateParams}/> : null}
+          <Parametrs  params={{w_el, U_rp, V_sr, w_kr, S0toD, lambda, pressure, delta}} onUpdateParams={this.updateParams}/>
+          {newParams.w_el ? <div className="mainParagraph">
+            <KinematicSynthesis params={{w_kr, V_sr, lambda, S0toD}} onUpdateParams={this.updateParams}/>
+            <KinematicTransmissionAnalysis params={{w_el, w_kr, U_rp}} onUpdateParams={this.updateParams}/>
+            {newParams.r ? <KinematicCompressorAnalysis params={{w_kr, r, lambda}} onUpdateParams={this.updateParams}/> : null} {/*Компонент отрисовывается только после появления новых значений в state*/}
+            {newParams.VBf ? <MomentsDetermination params={{VBf, VCf, pressure, D, w2}} onUpdateParams={this.updateParams}/> : null}
+            {newParams.TprCycle ? <EngineDetermination params={{TprCycle, w2, w_el}} onUpdateParams={this.updateParams}/> : null}
+            {newParams.n ? <ShaftDinamicCalculation params={{n, U_rp, U_r, Psd}} onUpdateParams={this.updateParams}/> : null}
+            {newParams.T2 ? <WorkingStressDetermination params={{U_r, T2}} onUpdateParams={this.updateParams}/> : null}
+          </div> : null}
         </div>
       </div>
     )
@@ -75,19 +81,79 @@ class Main extends React.Component {
 }
 
 class Parametrs extends React.Component { //Начальные параметры
+  constructor(props){
+    super(props)
+    this.state = ({
+      w_el: ["w_el", "157"],
+      U_rp: ["U_rp", "3"],
+      V_sr: ["V_sr", "1.2"],
+      w_kr: ["w_kr", "14"],
+      S0toD: ["S0toD", "1"],
+      lambda: ["lambda", "0.15"],
+      pressure: ["pressure", "0.32"],
+      delta: ["delta", "0.01"]
+    })
+    this.onChangeW_el = this.onChangeW_el.bind(this)
+    this.onChangeU_rp = this.onChangeU_rp.bind(this)
+    this.onChangeV_sr = this.onChangeV_sr.bind(this)
+    this.onChangeW_kr = this.onChangeW_kr.bind(this)
+    this.onChangeS0toD = this.onChangeS0toD.bind(this)
+    this.onChangeLambda = this.onChangeLambda.bind(this)
+    this.onChangePressure = this.onChangePressure.bind(this)
+    this.onChangeDelta = this.onChangeDelta.bind(this)
+  }
+
+  onChangeW_el(event){
+    this.setState({w_el: ["w_el", event.target.value]});
+  }
+
+  onChangeU_rp(event){
+    this.setState({U_rp: ["U_rp", event.target.value]});
+  }
+
+  onChangeV_sr(event){
+    this.setState({V_sr: ["V_sr", event.target.value]});
+  }
+
+  onChangeW_kr(event){
+    this.setState({w_kr: ["w_kr", event.target.value]});
+  }
+
+  onChangeS0toD(event){
+    this.setState({S0toD: ["S0toD", event.target.value]});
+  }
+
+  onChangeLambda(event){
+    this.setState({lambda: ["lambda", event.target.value]});
+  }
+
+  onChangePressure(event){
+    this.setState({pressure: ["pressure", event.target.value]});
+  }
+
+  onChangeDelta(event){
+    this.setState({delta: ["delta", event.target.value]});
+  }
+
+  onClickSend = () => {
+    for (let key in this.state) {
+      this.props.onUpdateParams(this.state[key][0], Number(this.state[key][1])  ) //Передаем значения родителю
+    }
+  }
 
   render() {
     return (
       <div className="parametrs paragraph">
         <h2>Начальные параметры: </h2>
-        <p>Wэл = {this.props.params.w_el} - угловая скорость вращения ротора электродвигателя, рад/с;</p>
-        <p>Uрп = {this.props.params.U_rp} - передаточное отношение ременной передачи;</p>
-        <p>Vср = {this.props.params.V_sr} - средняя скорость поршня компрессора, м/с;</p>
-        <p>ωкр = {this.props.params.w_kr} - угловая скорость вращения кривошипа, рад/с;</p>
-        <p>S0/D = {this.props.params.S0toD} - отношение хода поршня к диаметру поршня;</p>
-        <p>λ = r/l = {this.props.params.lambda} - отношение длины кривошипа к длине шатуна;</p>
-        <p>P = {this.props.params.pressure} - среднее удельное давление на поршень компрессора, Мпа;</p>
-        <p>[δ] = {this.props.params.delta} - допускаемое значение коэффициента неравномерности вращения звена приведения;</p>
+        <p><label>Wэл: <input type="text" name="w_el" value={this.state.w_el[1]} onChange={this.onChangeW_el} id="input1"/>, рад/с - угловая скорость вращения ротора электродвигателя;</label></p>
+        <p><label>Uрп: <input type="text" name="U_rp" value={this.state.U_rp[1]} onChange={this.onChangeU_rp} id="input2"/> - передаточное отношение ременной передачи;</label></p>
+        <p><label>Vср: <input type="text" name="V_sr" value={this.state.V_sr[1]} onChange={this.onChangeV_sr} id="input3"/>, м/с- средняя скорость поршня компрессора;</label></p>
+        <p><label>ωкр: <input type="text" name="w_kr" value={this.state.w_kr[1]} onChange={this.onChangeW_kr} id="input4"/>, рад/с - угловая скорость вращения кривошипа;</label></p>
+        <p><label>S0/D: <input type="text" name="S0toD" value={this.state.S0toD[1]} onChange={this.onChangeS0toD} id="input5"/> - отношение хода поршня к диаметру поршня;</label></p>
+        <p><label>λ: <input type="text" name="lambda" value={this.state.lambda[1]} onChange={this.onChangeLambda} id="input6"/> = r/l - отношение длины кривошипа к длине шатуна;</label></p>
+        <p><label>P: <input type="text" name="pressure" value={this.state.pressure[1]} onChange={this.onChangePressure} id="input7"/>, Мпа - среднее удельное давление на поршень компрессора;</label></p>
+        <p><label>[δ]: <input type="text" name="delta" value={this.state.delta[1]} onChange={this.onChangeDelta} id="input8"/> - допускаемое значение коэффициента неравномерности вращения звена приведения;</label></p>
+        <input type="button" onClick={this.onClickSend} value="Отправить" id="button1"></input>
       </div>
     )
   }
@@ -111,7 +177,7 @@ class KinematicSynthesis extends React.Component { //Кинематически�
       }
     }
     const {S0, r, l, D} = this.state
-
+    const {S0toD} = this.props.params
     return (
       <div className="kinSintes paragraph" onLoad = {update}> {/*При рендере div выполняем передачу новых значений родителю*/}
         <h2>5.2 Кинематический синтез</h2>
@@ -120,13 +186,13 @@ class KinematicSynthesis extends React.Component { //Кинематически�
         <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/S0.png" alt="ход ползуна"></img>
         <p className="result">S0 = {S0[1]} м.</p>
         <p>Из схемы кривошипно-ползунного механизма следует</p>
-        <p className="result">r = 0,5 * {S0[1]} = {r[1]} м.</p>
+        <p className="result">r = 0.5 * {S0[1]} = {r[1]} м</p>
         <p>Длина шатуна</p>
         <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/l.png" alt="длина шатуна"></img>
-        <p className="result">l = {l[1]}</p>
+        <p className="result">l = {l[1]} м</p>
         <p>Диаметр поршня находим из соотношения S0/D</p>
-        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/D.png" alt="диаметр поршня"></img>
-        <p className="result">D = {D[1]}</p>
+        <p className="result">D = S0 / {S0toD}</p>
+        <p className="result">D = {D[1]} м</p>
       </div>
     )
   }
@@ -364,7 +430,7 @@ class MomentsDetermination extends React.Component {
         <p>Силами производственных сопротивлений являются силы давления воздуха в цилиндрах компрессора на поршни при прямых и обратных ходах. Они характеризуются средним постоянным удельным давлением P.</p>
         <p>Сила постоянного давления F на поршень определяется по формуле:</p>
         <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/F.png" alt="сила постоянного давления"></img>
-        <p className="result">F = {F[1]}</p>
+        <p className="result">F = {F[1]} м</p>
         <p>где (πD^2)/4 – площадь поршня компрессора, D – диаметр поршня, P – среднее удельное давление.</p>
         <br />
         <p>Определим приведенные моменты сил Tпр.1(φ) для первого КПМ и Tпр.2(φ) для второго КПМ.</p>
@@ -422,7 +488,7 @@ class EngineDetermination extends React.Component {
     }
 
     for (let key in engines[engineGroup]){ //!НЕ СТИРАТЬ, ЭТО ПОДСКАЗКА!
-      if (Pel <= key) {
+      if (Pel <= Number(key)) {
         P_nominal = key;
         engine = engines[engineGroup][P_nominal];
         break;
@@ -451,7 +517,7 @@ class EngineDetermination extends React.Component {
     const {Psp, Psd, Pel, engineName, P_engine, n, J, d} = this.state
     return (
       <div className="engineDetermination paragraph">
-        <h2>6.2 Определение мощности сил движущих и подбор элек-тродвигателя</h2>
+        <h2>6.2 Определение мощности сил движущих и подбор электродвигателя</h2>
         <p>Мощность сил движущих определим по формуле:</p>
         <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/Psd.png" alt="мощность сил движущих"></img>
         <p>Где Pсп – мощность сил производственных сопротивлений, развиваемая поршнем компрессора:</p>
@@ -460,10 +526,10 @@ class EngineDetermination extends React.Component {
         <p>ηагр – КПД машинного агрегата без учета потерь в двигателе (собственные потери двигателя учитываются в его выходных параметрах).</p>
         <p>КПД агрегата оценивается приблизительно с учетом типа соединения редуктора и компрессора:</p>
         <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/Efficiency.png" alt="КПД"></img>
-        <p>где  ηрп – КПД ременной передачи, η_рп = 0,92...0,96;</p>
-        <p>η_р – КПД редуктора (для цилиндрического редуктора η_р = 0,96);</p>
-        <p>η_к – КПД компрессора (при параллельном соединении кривошипно-ползунных механизмов насоса η_к = 0,9);</p>
-        <p>η_м – КПД соединительной муфты, η_м = 0,98;</p>
+        <p>где  ηрп – КПД ременной передачи, ηрп = 0,92...0,96;</p>
+        <p>ηр – КПД редуктора (для цилиндрического редуктора ηр = 0,96);</p>
+        <p>ηк – КПД компрессора (при параллельном соединении кривошипно-ползунных механизмов насоса ηк = 0,9);</p>
+        <p>ηм – КПД соединительной муфты, ηм = 0,98;</p>
         <p>Отсюда:</p>
         <p className="result">ηагр = {(0.94 * 0.96 * 0.9 * 0.98).toFixed(3)}</p>
         <p>Тогда:</p>
@@ -531,43 +597,77 @@ class WorkingStressDetermination extends React.Component {
   constructor(props) {
     super(props)
 
-    const a_w_array = [40, 50, 63, 71, 80, 90, 100, 112, 125, 140, 160, 180, 200, 224, 250, 280,
+    const a_w_array = [40, 50, 63, 71, 80, 90, 100, 112, 125, 140, 160, 180, 200, 224, 250, 280, //ГОСТ 2185-66
     315, 355, 400, 450, 500, 560, 630, 710, 800, 900, 1000, 1120, 1250, 1400, 1600, 1800, 2000,
     2240, 2500]
 
     const {T2, U_r} = this.props.params
 
     const L = 10000
-    const sigma_n_lim = 2 * 225 + 70
+    const sigma_n_lim = 2 * 225 + 70 //Приближенное значение предела контактной выносливости
     const Zn = 1
     const Sn = 1.1
     const sigma_n = (sigma_n_lim * Zn / Sn).toFixed(3)
-    const psi_ba = 0.4
-    const Knb = 1.25
+    const psi_ba = 0.4 //Коэффициент штрины венца
+    const Knb = 1.25 //Коэффициент, учитывающий неравномерность распределения нагрузки по ширине венца
     const Ka = 430
 
-    let a_w = (Ka*(U_r + 1)*Math.pow((T2*Knb)/(Math.pow(sigma_n, 2)*U_r*psi_ba),(1/3))).toFixed(3)
-    const a_w_before = a_w
+    let a_w = (Ka*(U_r + 1)*Math.pow((T2*Knb)/(Math.pow(sigma_n, 2)*Math.pow(U_r, 2)*psi_ba),(1/3))).toFixed(3)//Межосевое расстояние
+    const a_w_before = a_w //Только для отображения в тексте
     for (let i = 0; i < a_w_array.length; i++) {
       if (a_w <= a_w_array[i]) {
-        if (a_w - a_w_array[i - 1] < (a_w_array[i] - a_w_array[i - 1]) / 2) {
-          a_w = a_w_array[i - 1];
-        } else {
-          a_w = a_w_array[i];
-        }
+        a_w = a_w_array[i];
         break;
       }
 
     }
+
+    const m_n_range = [0.01 * a_w, 0.02 * a_w];
+    const m_n_array = [0.05, 0.055, 0.06, 0.07, 0.08, 0.09, 0.11, 0.12, 0.14,
+       0.15, 0.18, 0.2, 0.22, 0.25, 0.28, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6,//ГОСТ 9563-60
+       0.7, 0.8, 0.9, 1, 1.125, 1.25, 1.375, 1.5, 1.75, 2, 2.25, 2.5, 2.75, 3,
+       3.5, 4, 4.5, 5, 5.5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 25, 28,
+       32, 36, 40, 45, 50, 55, 60, 70, 89, 90, 100];
+
+    let m_n
+    for (let i = 0; i < m_n_array.length; i++) {
+      if (m_n_array[i] >= m_n_range[0]) {
+        m_n = m_n_array[i];
+        break;
+      }
+    }
+
+    let beta = 10 * Math.PI /180//Угол наклона зубьев
+    const z1 = Math.round((2 * a_w * Math.cos(beta) / ((U_r + 1) * m_n)));
+    const z2 = Math.round(z1 * U_r);
+
+    const cos_beta = ((z1 + z2) * m_n / (2 * a_w)).toFixed(4);
+    beta = (Math.acos(cos_beta) / Math.PI * 180).toFixed(3);
+
     this.state = ({
       sigma_n_lim: ["sigma_n_lim", sigma_n_lim],
       sigma_n: ["sigma_n", sigma_n],
       a_w_before: ["a_w_before", a_w_before],
-      a_w: ["a_w", a_w]
+      a_w: ["a_w", a_w],
+      m_n: ["m_n", m_n],
+      z1: ["z1", z1],
+      z2: ["z2", z2],
+      cos_beta: ["cos_beta", cos_beta],
+      beta: ["beta", beta]
     })
   }
+
+  componentDidMount() {
+    for (let key in this.state) {
+      if(this.state[key][0] != "cos_beta" && this.state[key][0] != "a_w_before") {
+        this.props.onUpdateParams(this.state[key][0], this.state[key][1]) //Передаем значения родителю
+      }
+    }
+  }
+
   render() {
-    const {sigma_n_lim, sigma_n, a_w, a_w_before} = this.state
+    const {sigma_n_lim, sigma_n, a_w, a_w_before, m_n, z1, z2, cos_beta, beta} = this.state
+    const m_n_range = [(0.01 * a_w[1]).toFixed(3), (0.02 * a_w[1]).toFixed(3)];
     return (
       <div className="workingStressDetermination paragraph">
         <h2>7.1 Определение допускаемых напряжений</h2>
@@ -577,7 +677,7 @@ class WorkingStressDetermination extends React.Component {
           <li>Термообработка зубчатых колес – нормализация или улучшение, обеспечивающая твердость по Бринелю HB = 200…250; временное сопротивление σB=800…900 МПа;</li>
           <li>Долговечность L=10000 ч;</li>
         </ul>
-        <p>Расчет зубчатых колес редуктора проводится из условий обеспече-ния прочности зубьев по контактным напряжениям:</p>
+        <p>Расчет зубчатых колес редуктора проводится из условий обеспечения прочности зубьев по контактным напряжениям:</p>
         <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/sigma_n1.png" alt="контактные напряжения"></img>
         <p>Допускаемые контактные напряжения при расчете на выносливость:</p>
         <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/sigma_n2.png" alt="допускаемые контактные напряжения"></img>
@@ -586,15 +686,30 @@ class WorkingStressDetermination extends React.Component {
         <p>Zн – коэффициент долговечности;</p>
         <p>Приближенное значение предела контактной выносливости при заданной твердости поверхности зубьев 2HB ≤350 определяют из выражения:</p>
         <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/sigma_n_lim.png" alt="предел контактной выносливости"></img>
-        <p className="result">σнlim = {sigma_n_lim[1]}</p>
+        <p className="result">σнlim = {sigma_n_lim[1]} Мпа</p>
         <p>При заданной долговечности редуктора L величина Zн=1. При нормализации или улучшении рекомендуется значение Sн=1,1. Отсюда:</p>
         <p className="result">[σн] = {sigma_n[1]} Мпа</p>
         <p>Примем коэффициент ширины венца ψba=0,4, а коэффициент, учитывающий неравномерность распределения нагрузки по ширине венца Kнβ=1,25.</p>
-        <p>Определим межосевое расстояние из условия контактной выносливо-сти активных поверхностей зубьев по формуле:</p>
-        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/a_w.png" alt="предел контактной выносливости"></img>
-        <p>Для косозубых передач Ka=43.</p>
+        <p>Определим межосевое расстояние из условия контактной выносливости активных поверхностей зубьев по формуле:</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/a_w2.png" alt="предел контактной выносливости"></img>
+        <p>Для косозубых передач Ka=430.</p>
         <p className="result">aw = {a_w_before[1]} мм</p>
         <p>Ближайшее значение межосевого расстояния по ГОСТ 2185-66 aw = {a_w[1]} мм.</p>
+        <p>Нормальный модуль</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/m_n.png" alt="нормальный модуль"></img>
+        <p className="result">mn = {m_n_range[0]} ... {m_n_range[1]}</p>
+        <p>принимаем по ГОСТ 9563 – 60: mn = {m_n[1]}</p>
+        <p>Примем предварительно угол наклона зубьев β=10°.</p>
+        <p>Число зубьев шестерни (если получается нецелое число - округляем до целого):</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/z1.png" alt="число зубьев шестерни"></img>
+        <p className="result">z1 = {z1[1]}</p>
+        <p>Число зубьев колеса:</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/z2.png" alt="число зубьев колеса"></img>
+        <p className="result">z2 = {z2[1]}</p>
+        <p>Уточняем значение угла наклона зубьев:</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/cosb1.png" alt="cos(β)"></img>
+        <p className="result">cos(β) = {cos_beta[1]}</p>
+        <p>Отсюда β = {beta[1]}°</p>
       </div>
     )
   }
