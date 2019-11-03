@@ -56,8 +56,18 @@ class Main extends React.Component {
        newParams.P_engine = this.state.P_engine
        newParams.Psd = this.state.Psd
        newParams.T2 = this.state.T2
+       newParams.sigma_n_lim = this.state.sigma_n_lim
+       newParams.sigma_n = this.state.sigma_n
+       newParams.a_w = this.state.a_w
+       newParams.m_n = this.state.m_n
+       newParams.z1 = this.state.z1
+       newParams.z2 = this.state.z2
+       newParams.beta = this.state.beta
+       newParams.psi_ba = this.state.psi_ba
     }
-    const {w_el, U_rp, V_sr, w_kr, S0toD, lambda, pressure, delta, S0, l, r, D, VBf, VCf, U_pr, U_r, U12, w1, w2, TprCycle, n, P_engine, J, d, Psd, T2} = newParams
+    const {w_el, U_rp, V_sr, w_kr, S0toD, lambda, pressure, delta, S0, l, r, D,
+       VBf, VCf, U_pr, U_r, U12, w1, w2, TprCycle, n, P_engine, J, d, Psd, T2,
+       sigma_n_lim, sigma_n, a_w, m_n, z1, z2, beta, psi_ba} = newParams
     return (
       <div className="main">
         <div className="mainInfo">
@@ -70,6 +80,7 @@ class Main extends React.Component {
             {newParams.TprCycle ? <EngineDetermination params={{TprCycle, w2, w_el}} onUpdateParams={this.updateParams}/> : null}
             {newParams.n ? <ShaftDinamicCalculation params={{n, U_rp, U_r, Psd}} onUpdateParams={this.updateParams}/> : null}
             {newParams.T2 ? <WorkingStressDetermination params={{U_r, T2}} onUpdateParams={this.updateParams}/> : null}
+            {newParams.beta ? <WheelsDetermination params={{m_n, beta, z1, z2, psi_ba, a_w, w1, U_r, T2}} onUpdateParams={this.updateParams}/> : null}
           </div> : null}
         </div>
       </div>
@@ -606,7 +617,7 @@ class WorkingStressDetermination extends React.Component {
     const L = 10000
     const sigma_n_lim = 2 * 225 + 70 //Приближенное значение предела контактной выносливости
     const Zn = 1
-    const Sn = 1.1
+    const Sn = 1.15
     const sigma_n = (sigma_n_lim * Zn / Sn).toFixed(3)
     const psi_ba = 0.4 //Коэффициент штрины венца
     const Knb = 1.25 //Коэффициент, учитывающий неравномерность распределения нагрузки по ширине венца
@@ -645,6 +656,7 @@ class WorkingStressDetermination extends React.Component {
     beta = (Math.acos(cos_beta) / Math.PI * 180).toFixed(3);
 
     this.state = ({
+      L: ["L", L],
       sigma_n_lim: ["sigma_n_lim", sigma_n_lim],
       sigma_n: ["sigma_n", sigma_n],
       a_w_before: ["a_w_before", a_w_before],
@@ -653,20 +665,21 @@ class WorkingStressDetermination extends React.Component {
       z1: ["z1", z1],
       z2: ["z2", z2],
       cos_beta: ["cos_beta", cos_beta],
-      beta: ["beta", beta]
+      beta: ["beta", beta],
+      psi_ba: ["psi_ba", psi_ba]
     })
   }
 
   componentDidMount() {
     for (let key in this.state) {
-      if(this.state[key][0] != "cos_beta" && this.state[key][0] != "a_w_before") {
+      if(this.state[key][0] !== "cos_beta" && this.state[key][0] !== "a_w_before") {
         this.props.onUpdateParams(this.state[key][0], this.state[key][1]) //Передаем значения родителю
       }
     }
   }
 
   render() {
-    const {sigma_n_lim, sigma_n, a_w, a_w_before, m_n, z1, z2, cos_beta, beta} = this.state
+    const {L, sigma_n_lim, sigma_n, a_w, a_w_before, m_n, z1, z2, cos_beta, beta} = this.state
     const m_n_range = [(0.01 * a_w[1]).toFixed(3), (0.02 * a_w[1]).toFixed(3)];
     return (
       <div className="workingStressDetermination paragraph">
@@ -675,7 +688,7 @@ class WorkingStressDetermination extends React.Component {
         <ul>
           <li>Материал зубчатых колес – сталь 45;</li>
           <li>Термообработка зубчатых колес – нормализация или улучшение, обеспечивающая твердость по Бринелю HB = 200…250; временное сопротивление σB=800…900 МПа;</li>
-          <li>Долговечность L=10000 ч;</li>
+          <li>Долговечность {L[1]} = 10000 ч;</li>
         </ul>
         <p>Расчет зубчатых колес редуктора проводится из условий обеспечения прочности зубьев по контактным напряжениям:</p>
         <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/sigma_n1.png" alt="контактные напряжения"></img>
@@ -687,7 +700,7 @@ class WorkingStressDetermination extends React.Component {
         <p>Приближенное значение предела контактной выносливости при заданной твердости поверхности зубьев 2HB ≤350 определяют из выражения:</p>
         <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/sigma_n_lim.png" alt="предел контактной выносливости"></img>
         <p className="result">σнlim = {sigma_n_lim[1]} Мпа</p>
-        <p>При заданной долговечности редуктора L величина Zн=1. При нормализации или улучшении рекомендуется значение Sн=1,1. Отсюда:</p>
+        <p>При заданной долговечности редуктора L величина Zн=1. При нормализации или улучшении рекомендуется значение Sн=1,15. Твердость для шестерни НВ=230, для колеса НВ=200. Отсюда:</p>
         <p className="result">[σн] = {sigma_n[1]} Мпа</p>
         <p>Примем коэффициент ширины венца ψba=0,4, а коэффициент, учитывающий неравномерность распределения нагрузки по ширине венца Kнβ=1,25.</p>
         <p>Определим межосевое расстояние из условия контактной выносливости активных поверхностей зубьев по формуле:</p>
@@ -697,7 +710,7 @@ class WorkingStressDetermination extends React.Component {
         <p>Ближайшее значение межосевого расстояния по ГОСТ 2185-66 aw = {a_w[1]} мм.</p>
         <p>Нормальный модуль</p>
         <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/m_n.png" alt="нормальный модуль"></img>
-        <p className="result">mn = {m_n_range[0]} ... {m_n_range[1]}</p>
+        <p className="result">mn = {m_n_range[0]} ÷ {m_n_range[1]}</p>
         <p>принимаем по ГОСТ 9563 – 60: mn = {m_n[1]}</p>
         <p>Примем предварительно угол наклона зубьев β=10°.</p>
         <p>Число зубьев шестерни (если получается нецелое число - округляем до целого):</p>
@@ -710,6 +723,144 @@ class WorkingStressDetermination extends React.Component {
         <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/cosb1.png" alt="cos(β)"></img>
         <p className="result">cos(β) = {cos_beta[1]}</p>
         <p>Отсюда β = {beta[1]}°</p>
+      </div>
+    )
+  }
+}
+
+class WheelsDetermination extends React.Component {
+  constructor(props) {
+    super(props)
+    const {m_n, beta, z1, z2, psi_ba, a_w, w1, U_r, T2} = this.props.params
+
+    const d1 = Number((m_n / Math.cos(beta * Math.PI / 180) * z1).toFixed()); //Диаметр шестерни
+    const d2 = Number((m_n / Math.cos(beta * Math.PI / 180) * z2).toFixed()); //Диаметр колеса
+
+    const d_a1 = Number(d1 + 2 * m_n); //Диаметр вершин шестерни
+    const d_a2 = Number(d2 + 2 * m_n); //Диаметр вершин колеса
+    const d_b1 = Number(d1 - 2 * m_n); //Диаметр впадин шестерни
+    const d_b2 = Number(d2 - 2 * m_n); //Диаметр впадин колеса
+
+    const b2 = Number(psi_ba * a_w); //Ширина колеса
+    const b1 = Number(b2 + 5); //Ширина шестерни
+
+    const psi_bd = Number((b1 / d1).toFixed(2)); //Коэффициент ширины шестерни по диаметру
+    const v = Number((w1 * d1 / 2000).toFixed(3)); //Окружная скорость колес
+
+    const K_H_beta_array = [[0.4, 1.04], [0.6, 1.06], [0.8, 1.08], [1, 1.11], //Твердость поверхности зубьев      !!!Не забыть сделать для HB > 350!!!
+    [1.2, 1.15], [1.4, 1.18], [1.6, 1.22], [1.8, 1.25], [2, 1.3]]; //!!!Не забыть сделать для HB > 350!!!
+
+    let K_H_beta;
+    for (let i = 0; i < K_H_beta_array.length; i++) { //Нахождение коэффициента Kнβ, временный вариант
+      if (psi_bd <= K_H_beta_array[i][0]) {
+        if ((K_H_beta_array[i][0] - 0.2) / 2 < K_H_beta_array[i][0] - psi_bd ) {
+          K_H_beta = K_H_beta_array[i - 1][1];
+        } else {
+          K_H_beta = K_H_beta_array[i][1];
+        }
+        break;
+      } else {
+        K_H_beta = 1;
+      }
+    }
+
+    const K_H_alpha_array = [1.06, 1.09, 1.13]; //!!!УСОВЕРШЕНСТВОВАТЬ!!!
+    let K_H_alpha; //Находим коэффициент Kнβα
+
+    if (v <= 1) { //И это тоже временный вариант
+        K_H_alpha = K_H_alpha_array[0];
+    } else if (v <= 5) {
+        K_H_alpha = K_H_alpha_array[1];
+    } else if (v <= 10) {
+        K_H_alpha = K_H_alpha_array[2];
+    } else {
+      K_H_alpha = 1;
+    }
+
+    const K_H_v_array = [1, 1.01]; //!!!УСОВЕРШЕНСТВОВАТЬ!!!
+    let K_H_v; //Находим коэффициент Kнβv
+
+    if (v <= 5) { //Совсем временный вариант
+      K_H_v = K_H_v_array[0];
+    } else if (v <= 10) {
+      K_H_v = K_H_v_array[1];
+    }
+
+    const K_H = Number((K_H_beta * K_H_alpha * K_H_v).toFixed(3)); //Коэффициент KH
+
+    const sigma_H = Number((270 / a_w * Math.pow((T2 * 1000 * K_H * Math.pow((U_r + 1),3))/(b2 * Math.pow(U_r, 2)), 1/2)).toFixed(3)) //Высчитываем контактные напряжения
+
+
+    this.state = ({
+      d1: ["d1", d1],
+      d2: ["d2", d2],
+      d_a1: ["d_a1", d_a1],
+      d_a2: ["d_a2", d_a2],
+      d_b1: ["d_b1", d_b1],
+      d_b2: ["d_b2", d_b2],
+      b2: ["b2", b2],
+      b1: ["b1", b1],
+      psi_bd: ["psi_bd", psi_bd],
+      v: ["v", v],
+      K_H_beta: ["K_H_beta", K_H_beta],
+      K_H_alpha: ["K_H_alpha", K_H_alpha],
+      K_H_v: ["K_H_v", K_H_v],
+      K_H: ["K_H", K_H],
+      sigma_H: ["sigma_H", sigma_H]
+    })
+  }
+
+  componentDidMount() {
+    for (let key in this.state) {
+      this.props.onUpdateParams(this.state[key][0], this.state[key][1]) //Передаем значения родителю
+    }
+  }
+
+  render(){
+    const {d1, d2, d_a1, d_a2, d_b1, d_b2, b2, b1, psi_bd, v, K_H_beta, K_H_v, K_H_alpha, K_H, sigma_H} = this.state
+    return (
+      <div className="wheelsDetermination paragraph">
+        <h2>7.2 Основные размеры шестерни и колеса</h2>
+        <p>Диаметры делительные:</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/d1.png" alt="диаметр шестерни"></img>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/d2.png" alt="диаметр колеса"></img>
+        <p className="result">d1 = {d1[1]} мм</p>
+        <p className="result">d2 = {d2[1]} мм</p>
+        <p>Проверка:</p>
+        <p className="result">aw = (d1 + d2) / 2 = {(d1[1] + d2[1]) / 2} мм</p>
+        <p>Диаметры вершин зубьев:</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/d_a1.png" alt="диаметр вершин шестерни"></img>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/d_a2.png" alt="диаметр вершин колеса"></img>
+        <p className="result">da1 = {d_a1[1]} мм</p>
+        <p className="result">da2 = {d_a2[1]} мм</p>
+        <p>Диаметры впадин зубьев:</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/d_b1.png" alt="диаметр впадин шестерни"></img>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/d_b2.png" alt="диаметр впадин колеса"></img>
+        <p className="result">db1 = {d_b1[1]} мм</p>
+        <p className="result">db2 = {d_b2[1]} мм</p>
+        <p>Ширина колеса:</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/b2.png" alt="ширина колеса"></img>
+        <p className="result">b2 = {b2[1]} мм</p>
+        <p>Ширина шестерни:</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/b1.png" alt="ширина шестерни"></img>
+        <p className="result">b1 = {b1[1]} мм</p>
+        <p>Коэффициент ширины шестерни по диаметру</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/psi_bd.png" alt="коэффициент ширины шестерни по диаметру"></img>
+        <p className="result">ψbd = {psi_bd[1]}</p>
+        <p>Окружная скорость колес:</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/v.png" alt="окружная скорость колес"></img>
+        <p className="result">v = {v[1]} м/с</p>
+        <p>Для косозубых передач при v &lt; 10 м/с следует принять 8-ю степень точности.</p>
+        <p>Коэффициент нагрузки:</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/K_H.png" alt="коэффициент нагрузки"></img>
+        <p>При ψbd = {psi_bd[1]} и HB &lt; 350 коэффициент KHβ = {K_H_beta[1]}</p>
+        <p>При 8 степени точности и v = {v[1]}:</p>
+        <p>&emsp;Коэффициент KHα = {K_H_alpha[1]}.</p>
+        <p>&emsp;Коэффициент KHv = {K_H_v[1]}.</p>
+        <p className="result">KH = {K_H[1]}</p>
+        <p>Проверка контактных напряжений:</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/sigma_H.png" alt="проверка контактных напряжений"></img>
+        <p className="result">σH = {sigma_H[1]} &lt; [σH]</p>
       </div>
     )
   }
