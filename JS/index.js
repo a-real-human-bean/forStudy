@@ -37,6 +37,7 @@ class Main extends React.Component {
        newParams.lambda = this.state.lambda //Отношение длины кривошипа к длине шатуна
        newParams.w_kr = this.state.w_kr //Угловая скорость вращения кривошипа
        newParams.pressure = this.state.pressure //Среднее удельное давление на поршень компрессора
+
        newParams.delta = this.state.delta
        newParams.S0 = this.state.S0
        newParams.r = this.state.r
@@ -64,10 +65,30 @@ class Main extends React.Component {
        newParams.z2 = this.state.z2
        newParams.beta = this.state.beta
        newParams.psi_ba = this.state.psi_ba
+       newParams.n_class = this.state.n_class
+       newParams.d1 = this.state.d1
+       newParams.d2 = this.state.d2
+       newParams.d_a1 = this.state.d_a1
+       newParams.d_a2 = this.state.d_a2
+       newParams.d_b1 = this.state.d_b1
+       newParams.d_b2 = this.state.d_b2
+       newParams.b1 = this.state.b1
+       newParams.b2 = this.state.b2
+       newParams.psi_bd = this.state.psi_bd
+       newParams.v = this.state.v
+       newParams.K_H_beta = this.state.K_H_beta
+       newParams.K_H_v = this.state.K_H_v
+       newParams.K_H_alpha = this.state.K_H_alpha
+       newParams.K_H = this.state.K_H
+       newParams.sigma_H = this.state.sigma_H
+       newParams.HB1 = this.state.HB1
+       newParams.HB2 = this.state.HB2
     }
     const {w_el, U_rp, V_sr, w_kr, S0toD, lambda, pressure, delta, S0, l, r, D,
        VBf, VCf, U_pr, U_r, U12, w1, w2, TprCycle, n, P_engine, J, d, Psd, T2,
-       sigma_n_lim, sigma_n, a_w, m_n, z1, z2, beta, psi_ba} = newParams
+       sigma_n_lim, sigma_n, a_w, m_n, z1, z2, beta, psi_ba, d1, d2, d_a1, d_a2,
+       d_b1, d_b2, b2, b1, psi_bd, v, K_H_beta, K_H_v, K_H_alpha, K_H, sigma_H,
+       n_class, HB1, HB2} = newParams
     return (
       <div className="main">
         <div className="mainInfo">
@@ -81,6 +102,7 @@ class Main extends React.Component {
             {newParams.n ? <ShaftDinamicCalculation params={{n, U_rp, U_r, Psd}} onUpdateParams={this.updateParams}/> : null}
             {newParams.T2 ? <WorkingStressDetermination params={{U_r, T2}} onUpdateParams={this.updateParams}/> : null}
             {newParams.beta ? <WheelsDetermination params={{m_n, beta, z1, z2, psi_ba, a_w, w1, U_r, T2}} onUpdateParams={this.updateParams}/> : null}
+            {newParams.d2 ? <BendingStress params={{T2, d2, beta, v, z1, z2, b1, b2, psi_bd, n_class, HB1, HB2, m_n}} onUpdateParams={this.updateParams} /> : null}
           </div> : null}
         </div>
       </div>
@@ -115,35 +137,35 @@ class Parametrs extends React.Component { //Начальные параметр�
   }
 
   onChangeW_el(event){
-    this.setState({w_el: ["w_el", event.target.value]});
+    this.setState({w_el: ["w_el", event.target.value.replace(",", ".")]});
   }
 
   onChangeU_rp(event){
-    this.setState({U_rp: ["U_rp", event.target.value]});
+    this.setState({U_rp: ["U_rp", event.target.value.replace(",", ".")]});
   }
 
   onChangeV_sr(event){
-    this.setState({V_sr: ["V_sr", event.target.value]});
+    this.setState({V_sr: ["V_sr", event.target.value.replace(",", ".")]});
   }
 
   onChangeW_kr(event){
-    this.setState({w_kr: ["w_kr", event.target.value]});
+    this.setState({w_kr: ["w_kr", event.target.value.replace(",", ".")]});
   }
 
   onChangeS0toD(event){
-    this.setState({S0toD: ["S0toD", event.target.value]});
+    this.setState({S0toD: ["S0toD", event.target.value.replace(",", ".")]});
   }
 
   onChangeLambda(event){
-    this.setState({lambda: ["lambda", event.target.value]});
+    this.setState({lambda: ["lambda", event.target.value.replace(",", ".")]});
   }
 
   onChangePressure(event){
-    this.setState({pressure: ["pressure", event.target.value]});
+    this.setState({pressure: ["pressure", event.target.value.replace(",", ".")]});
   }
 
   onChangeDelta(event){
-    this.setState({delta: ["delta", event.target.value]});
+    this.setState({delta: ["delta", event.target.value.replace(",", ".")]});
   }
 
   onClickSend = () => {
@@ -566,7 +588,7 @@ class ShaftDinamicCalculation extends React.Component {
     const {n, U_rp, U_r, Psd} = this.props.params
     const n_b = (n / U_rp).toFixed(3) //Частота вращения быстроходного вала
     const n_t = (n_b / U_r).toFixed(3) //Частота вращения тихоходного вала
-    const T2 = (Psd * 9550 / n_t).toFixed(3) //Вращающий момент на ведомом валу редуктора
+    const T2 = Number((Psd * 9550 / n_t).toFixed(3)) //Вращающий момент на ведомом валу редуктора
     const T1 = (T2 / U_r).toFixed(3) //Вращающий момент на ведущем валу редуктора
     this.state = ({
       n_b: ["n_b", n_b],
@@ -607,6 +629,9 @@ class ShaftDinamicCalculation extends React.Component {
 class WorkingStressDetermination extends React.Component {
   constructor(props) {
     super(props)
+
+    const HB1 = 230; //HB шестерни
+    const HB2 = 200; //HB колеса
 
     const a_w_array = [40, 50, 63, 71, 80, 90, 100, 112, 125, 140, 160, 180, 200, 224, 250, 280, //ГОСТ 2185-66
     315, 355, 400, 450, 500, 560, 630, 710, 800, 900, 1000, 1120, 1250, 1400, 1600, 1800, 2000,
@@ -653,7 +678,7 @@ class WorkingStressDetermination extends React.Component {
     const z2 = Math.round(z1 * U_r);
 
     const cos_beta = ((z1 + z2) * m_n / (2 * a_w)).toFixed(4);
-    beta = (Math.acos(cos_beta) / Math.PI * 180).toFixed(3);
+    beta = Number((Math.acos(cos_beta) / Math.PI * 180).toFixed(3));
 
     this.state = ({
       L: ["L", L],
@@ -666,7 +691,9 @@ class WorkingStressDetermination extends React.Component {
       z2: ["z2", z2],
       cos_beta: ["cos_beta", cos_beta],
       beta: ["beta", beta],
-      psi_ba: ["psi_ba", psi_ba]
+      psi_ba: ["psi_ba", psi_ba],
+      HB1: ["HB1", HB1],
+      HB2: ["HB2", HB2]
     })
   }
 
@@ -731,6 +758,7 @@ class WorkingStressDetermination extends React.Component {
 class WheelsDetermination extends React.Component {
   constructor(props) {
     super(props)
+    const n_class = 8; //Степень точности !!!УСОВЕРШЕНСТВОВАТЬ!!!
     const {m_n, beta, z1, z2, psi_ba, a_w, w1, U_r, T2} = this.props.params
 
     const d1 = Number((m_n / Math.cos(beta * Math.PI / 180) * z1).toFixed()); //Диаметр шестерни
@@ -792,6 +820,7 @@ class WheelsDetermination extends React.Component {
 
 
     this.state = ({
+      n_class: ["n_class", n_class],
       d1: ["d1", d1],
       d2: ["d2", d2],
       d_a1: ["d_a1", d_a1],
@@ -817,7 +846,7 @@ class WheelsDetermination extends React.Component {
   }
 
   render(){
-    const {d1, d2, d_a1, d_a2, d_b1, d_b2, b2, b1, psi_bd, v, K_H_beta, K_H_v, K_H_alpha, K_H, sigma_H} = this.state
+    const {d1, d2, d_a1, d_a2, d_b1, d_b2, b2, b1, psi_bd, v, K_H_beta, K_H_v, K_H_alpha, K_H, sigma_H, n_class} = this.state
     return (
       <div className="wheelsDetermination paragraph">
         <h2>7.2 Основные размеры шестерни и колеса</h2>
@@ -850,17 +879,219 @@ class WheelsDetermination extends React.Component {
         <p>Окружная скорость колес:</p>
         <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/v.png" alt="окружная скорость колес"></img>
         <p className="result">v = {v[1]} м/с</p>
-        <p>Для косозубых передач при v &lt; 10 м/с следует принять 8-ю степень точности.</p>
+        <p>Для косозубых передач при v &lt; 10 м/с следует принять {n_class[1]}-ю степень точности.</p> {/*!!!УСОВЕРШЕНСТВОВАТЬ!!!*/}
         <p>Коэффициент нагрузки:</p>
         <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/K_H.png" alt="коэффициент нагрузки"></img>
         <p>При ψbd = {psi_bd[1]} и HB &lt; 350 коэффициент KHβ = {K_H_beta[1]}</p>
-        <p>При 8 степени точности и v = {v[1]}:</p>
+        <p>При {n_class[1]} степени точности и v = {v[1]} м/с:</p>
         <p>&emsp;Коэффициент KHα = {K_H_alpha[1]}.</p>
         <p>&emsp;Коэффициент KHv = {K_H_v[1]}.</p>
         <p className="result">KH = {K_H[1]}</p>
         <p>Проверка контактных напряжений:</p>
         <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/sigma_H.png" alt="проверка контактных напряжений"></img>
         <p className="result">σH = {sigma_H[1]} &lt; [σH]</p>
+      </div>
+    )
+  }
+}
+
+class BendingStress extends React.Component { //Допускаемое напряжение на изгиб
+    constructor(props){
+    super(props)
+
+    const {T2, d2, beta, v, z1, z2, b1, b2, psi_bd, n_class, HB1, HB2, m_n} = this.props.params
+    const alpha = 20; //Стандартное значение
+    const F_t = Number((2 * 1000 * T2 / d2).toFixed(3)); //Окружная сила
+    const F_r = Number((F_t * Math.tan(alpha * Math.PI / 180) / Math.cos(beta * Math.PI / 180)).toFixed(3)); //Радиальная сила
+    const F_alpha = Number((F_t * Math.tan(beta * Math.PI / 180)).toFixed(3)); //Осевая сила
+
+    const K_F_beta_array = [[0.2, 1.04], [0.4, 1.07], [0.6, 1.12], [0.8, 1.17], //!!!УСОВЕРШЕНСТВОВАТЬ!!!
+    [1, 1.23], [1.2, 1.3], [1.4, 1.38], [1.6, 1.45], [1.8, 1.53]]; //Значения коэффициента КFβ
+    let K_F_beta;
+
+    for (let i = 0; i < K_F_beta_array.length; i++) { //Нахождение коэффициента KFβ, временный вариант
+      if (psi_bd <= K_F_beta_array[i][0]) {
+        if ((K_F_beta_array[i][0] - 0.2) / 2 < K_F_beta_array[i][0] - psi_bd ) {
+          K_F_beta = K_F_beta_array[i - 1][1];
+        } else {
+          K_F_beta = K_F_beta_array[i][1];
+        }
+        break;
+      } else {
+        K_F_beta = 1;
+      }
+    }
+
+    const K_F_v_array = [[1.1, 1.3, 1.4], [1, 1, 1.2], [1, 1, 1.1]]; ////Значения коэффициента КFv
+    let K_F_v;
+
+    switch (n_class) { //Нахождение коэффициента KFv, временный вариант
+      case 8:
+        if (v <= 3) {
+          K_F_v = K_F_v_array[0][0];
+        } else if (v <= 8) {
+          K_F_v = K_F_v_array[0][1];
+        } else if (v < 12.5) {
+          K_F_v = K_F_v_array[0][2];
+        } else {
+          K_F_v = 1;
+        }
+        break;
+      case 7:
+        if (v <= 3) {
+          K_F_v = K_F_v_array[1][0];
+        } else if (v <= 8) {
+          K_F_v = K_F_v_array[1][1];
+        } else if (v < 12.5) {
+          K_F_v = K_F_v_array[1][2];
+        } else {
+          K_F_v = 1;
+        }
+        break;
+      case 6:
+        if (v <= 3) {
+          K_F_v = K_F_v_array[2][0];
+        } else if (v <= 8) {
+          K_F_v = K_F_v_array[2][1];
+        } else if (v < 12.5) {
+          K_F_v = K_F_v_array[2][2];
+        } else {
+          K_F_v = 1;
+        }
+        break;
+      default:
+        K_F_v = 1;
+    }
+
+    const K_F = Number(K_F_v * K_F_beta);
+
+    const z_v1 = Number((z1 / Math.pow(Math.cos(beta * Math.PI / 180), 3)).toFixed()); //Эквивалетное число зубьев у шестерни
+    const z_v2 = Number((z2 / Math.pow(Math.cos(beta * Math.PI / 180), 3)).toFixed()); //Эквивалетное число зубьев у колеса
+
+    const Y_F_determination = (z) => { //Определение коэффициента YF
+      if (z <= 17) {
+        return 4.27;
+      } else if (z <= 20) {
+        return 4.07;
+      } else if (z <= 25) {
+        return 3.9;
+      } else if (z <= 40) {
+        return 3.7;
+      } else if (z <= 50) {
+        return 3.65;
+      } else if (z <= 60) {
+        return 3.63;
+      } else {
+        return 3.6;
+      }
+    }
+
+    const Y_F1 = Y_F_determination(z_v1);
+    const Y_F2 = Y_F_determination(z_v2);
+
+    const Y_beta = Number((1 - (beta / 140)).toFixed(3)); //Определяем коэффициент Yβ
+    const epsilon_alpha = 1.5; //Среднее значение торцевого перекрытия, стандартное значение
+    const K_F_alpha = Number(((4 + (epsilon_alpha - 1) * (n_class - 5)) / (4 * epsilon_alpha)).toFixed(3)); //Определение коэффициента KFα
+
+    const sigma_F_limb = 1.8; //!!!УСОВЕРШЕНСТВОВАТЬ!!! для других HB
+    const SF = 1.75; //!!!УСОВЕРШЕНСТВОВАТЬ!!!
+
+    const sigma_F1 = Number((sigma_F_limb * HB1 / SF).toFixed()); //Допускаемые напряжения для шестерни
+    const sigma_F2 = Number((sigma_F_limb * HB2 / SF).toFixed()); //Допускаемые напряжения для колеса
+
+    const sigma_F1_to_Y_F1 = Number((sigma_F1 / Y_F1).toFixed(3));
+    const sigma_F2_to_Y_F2 = Number((sigma_F2 / Y_F2).toFixed(3));
+
+    const sigma_F2_p = Number((F_t * K_F * Y_F2 * Y_beta * K_F_alpha / (b2 * m_n)).toFixed(3)) //Проверочные напряжения (p)
+    const sigma_F1_p = Number((F_t * K_F * Y_F1 * Y_beta * K_F_alpha / (b1 * m_n)).toFixed(3))
+
+    this.state = ({
+      F_t: ["F_t", F_t],
+      F_r: ["F_r", F_r],
+      F_alpha: ["F_alpha", F_alpha],
+      K_F_beta: ["K_F_beta", K_F_beta],
+      K_F_v: ["K_F_v", K_F_v],
+      K_F: ["K_F", K_F],
+      z_v1: ["z_v1", z_v1],
+      z_v2: ["z_v2", z_v2],
+      Y_F1: ["Y_F1", Y_F1],
+      Y_F2: ["Y_F2", Y_F2],
+      Y_beta: ["Y_beta", Y_beta],
+      K_F_alpha: ["K_F_alpha", K_F_alpha],
+      sigma_F1: ["sigma_F1", sigma_F1],
+      sigma_F2: ["sigma_F2", sigma_F2],
+      sigma_F1_to_Y_F1: ["sigma_F1_to_Y_F1", sigma_F1_to_Y_F1],
+      sigma_F2_to_Y_F2: ["sigma_F2_to_Y_F2", sigma_F2_to_Y_F2],
+      sigma_F2_p: ["sigma_F2_p", sigma_F2_p],
+      sigma_F1_p: ["sigma_F1_p", sigma_F1_p]
+    })
+  }
+
+  render(){
+    const {F_t, F_r, F_alpha, K_F_beta, K_F_v, K_F, z_v1, z_v2, Y_F1, Y_F2, Y_beta, K_F_alpha, sigma_F1, sigma_F2, sigma_F1_to_Y_F1, sigma_F2_to_Y_F2, sigma_F1_p, sigma_F2_p} = this.state
+    const {psi_bd, v, n_class} = this.props.params
+    return (
+      <div className="bendingStress paragraph">
+        <p>Силы, действующие в зацеплении:</p>
+        <p>Окружная:</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/F_t.png" alt="окружная сила"></img>
+        <p className="result">Ft = {F_t[1]} Н</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/F_r.png" alt="радиальная сила"></img>
+        <p>Радиальная:</p>
+        <p className="result">Fr = {F_r[1]} Н</p>
+        <p>Осевая:</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/F_alpha.png" alt="осевая сила"></img>
+        <p className="result">Fα = {F_alpha[1]} Н</p>
+        <p>Проверка зубьев на выносливость по напряжениям изгиба:</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/sigma_F.png" alt="напряжения на изгиб"></img>
+        <p>Коэффициент нагрузки:</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/K_F.png" alt="коэффициент нагрузки"></img>
+        <p>При ψbd = {psi_bd} и HB &lt; 350 коэффициент KFβ = {K_F_beta[1]}.</p> {/*В дальнейшем надо будет сделать для других HB !!!УСОВЕРШЕНСТВОВАТЬ!!!*/}
+        <p>При {n_class} степени точности, v = {v} м/с и HB &lt; 350 коэффициент KFv = {K_F_v[1]}.</p> {/*В дальнейшем надо будет сделать для других HB !!!УСОВЕРШЕНСТВОВАТЬ!!!*/}
+        <p>Таким образом:</p>
+        <p className="result">KF = {K_F[1]}</p>
+        <p>Коэффициент, учитывающий форму зуба, YF зависит от эквивалентного числа зубьев zv. У шестерни:</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/z_v1.png" alt="эквивалетное число зубьев у шестерни"></img>
+        <p className="result">zv1 = {z_v1[1]}</p>
+        <p>У колеса:</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/z_v2.png" alt="эквивалетное число зубьев у колеса"></img>
+        <p className="result">zv1 = {z_v2[1]}</p>
+        <p>Отсюда, значения коэффициентов YF по ГОСТ 21354-75:</p>
+        <p className="result">YF1 = {Y_F1[1]} и YF2 = {Y_F2[1]}</p>
+        <p>Определяем коэффициенты Yβ и KFα:</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/Y_beta.png" alt="коэффициент Yβ"></img>
+        <p className="result">Yβ = {Y_beta[1]}</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/K_F_alpha.png" alt="коэффициент KFα"></img>
+        <p>где εα - среднее значение торцевого перекрытия, εα=1,5;</p>
+        <p>n – степень точности, n = {n_class};</p>
+        <p className="result">KFα = {K_F_alpha[1]}</p>
+        <p>Допускаемое напряжение на изгиб:</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/sigma_F_permissible.png" alt="Допускаемое напряжение на изгиб"></img>
+        <p>При нормализации или улучшении стали 45 при твердости HB ≤ 350 σFlimb = 1.8 * HB, [SF] = 1.75.</p> {/*!!!УСОВЕРШЕНСТВОВАТЬ!!!*/}
+        <p>Допускаемые напряжения для шестерни:</p>
+        <p className="result">[σF1] = {sigma_F1[1]} МПа</p>
+        <p>Для колеса:</p>
+        <p className="result">[σF2] = {sigma_F2[1]} МПа</p>
+        <p className="textAndImage">Находим отношения</p><img className="inLineImg" src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/sigma_F_to_Y_F.png" alt="Отношение напряжения на изгиб к коэффициенту YF"></img>
+        <p>Для шестерни:</p>
+        <p className="result">[σF1]/YF1 = {sigma_F1_to_Y_F1[1]}</p>
+        <p>Для колеса:</p>
+        <p className="result">[σF2]/YF2 = {sigma_F2_to_Y_F2[1]}</p>
+        {sigma_F1_to_Y_F1[1] > sigma_F2_to_Y_F2[1] ?
+          <div>
+            <p>Проверку на изгиб проводим для колеса, так как у него отношение [σF]/YF меньше.</p>
+            <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/sigma_F2.png" alt="Проверка на изгиб для колеса"></img>
+            <p className="result">σF2 = {sigma_F2_p[1]} МПа</p>
+            <p className="result">σF2 &lt; [σF2]</p> {/*!!!УСОВЕРШЕНСТВОВАТЬ!!!*/}
+          </div> :
+          <div>
+            <p>Проверку на изгиб проводим для шестерни, так как у нее отношение [σF]/YF меньше.</p>
+            <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/sigma_F1.png" alt="Проверка на изгиб для шестерни"></img>
+            <p className="result">σF1 = {sigma_F1_p[1]} МПа</p>
+            <p className="result">σF1 &lt; [σF1]</p> {/*!!!УСОВЕРШЕНСТВОВАТЬ!!!*/}
+          </div>
+        }
+        <p>Условие прочности выполенено.</p>
       </div>
     )
   }
