@@ -83,12 +83,32 @@ class Main extends React.Component {
        newParams.sigma_H = this.state.sigma_H
        newParams.HB1 = this.state.HB1
        newParams.HB2 = this.state.HB2
+       newParams.F_t = this.state.F_t
+       newParams.F_r = this.state.F_r
+       newParams.F_alpha = this.state.F_alpha
+       newParams.K_F_beta = this.state.K_F_beta
+       newParams.K_F_v = this.state.K_F_v
+       newParams.K_F = this.state.K_F
+       newParams.z_v1 = this.state.z_v1
+       newParams.z_v2 = this.state.z_v2
+       newParams.Y_F1 = this.state.Y_F1
+       newParams.Y_F2 = this.state.Y_F2
+       newParams.Y_beta = this.state.Y_beta
+       newParams.K_F_alpha = this.state.K_F_alpha
+       newParams.sigma_F1 = this.state.sigma_F1
+       newParams.sigma_F2 = this.state.sigma_F2
+       newParams.sigma_F1_to_Y_F1 = this.state.sigma_F1_to_Y_F1
+       newParams.sigma_F2_to_Y_F2 = this.state.sigma_F2_to_Y_F2
+       newParams.sigma_F1_p = this.state.sigma_F1_p
+       newParams.sigma_F2_p = this.state.sigma_F2_p
     }
     const {w_el, U_rp, V_sr, w_kr, S0toD, lambda, pressure, delta, S0, l, r, D,
        VBf, VCf, U_pr, U_r, U12, w1, w2, TprCycle, n, P_engine, J, d, Psd, T2,
        sigma_n_lim, sigma_n, a_w, m_n, z1, z2, beta, psi_ba, d1, d2, d_a1, d_a2,
        d_b1, d_b2, b2, b1, psi_bd, v, K_H_beta, K_H_v, K_H_alpha, K_H, sigma_H,
-       n_class, HB1, HB2} = newParams
+       n_class, HB1, HB2, F_t, F_r, F_alpha, K_F_beta, K_F_v, K_F, z_v1, z_v2,
+       Y_F1, Y_F2, Y_beta, K_F_alpha, sigma_F1, sigma_F2, sigma_F1_to_Y_F1,
+       sigma_F2_to_Y_F2, sigma_F1_p, sigma_F2_p} = newParams
     return (
       <div className="main">
         <div className="mainInfo">
@@ -103,6 +123,7 @@ class Main extends React.Component {
             {newParams.T2 ? <WorkingStressDetermination params={{U_r, T2}} onUpdateParams={this.updateParams}/> : null}
             {newParams.beta ? <WheelsDetermination params={{m_n, beta, z1, z2, psi_ba, a_w, w1, U_r, T2}} onUpdateParams={this.updateParams}/> : null}
             {newParams.d2 ? <BendingStress params={{T2, d2, beta, v, z1, z2, b1, b2, psi_bd, n_class, HB1, HB2, m_n}} onUpdateParams={this.updateParams} /> : null}
+            {newParams.P_engine ? <Belting params={{P_engine, n, w1, U_rp}} onUpdateParams={this.updateParams}/> : null}
           </div> : null}
         </div>
       </div>
@@ -213,7 +234,7 @@ class KinematicSynthesis extends React.Component { //Кинематически�
     const {S0toD} = this.props.params
     return (
       <div className="kinSintes paragraph" onLoad = {update}> {/*При рендере div выполняем передачу новых значений родителю*/}
-        <h2>5.2 Кинематический синтез</h2>
+        <h2>1.2 Кинематический синтез</h2>
         <p>По исходным данным Wкр, Vср и λ следует определить ход ползуна S0, размер кривошипа r и длину шатуна l.</p>
         <p>Ход ползуна определим по формуле</p>
         <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/S0.png" alt="ход ползуна"></img>
@@ -252,7 +273,7 @@ class KinematicTransmissionAnalysis extends React.Component{ //Кинемати�
     const {U_pr, U_r, U12, w1, w2} = this.state
     return (
       <div className="kinSintAnalysis paragraph" onLoad={update}> {/*При рендере div выполняем передачу новых значений родителю*/}
-        <h2>5.3 Кинематический анализ передаточного механизма агрегата</h2>
+        <h2>1.3 Кинематический анализ передаточного механизма агрегата</h2>
         <p>Кинематический расчет привода компрессора (замедляющей передачи)
 производится из условия обеспечения требуемого передаточного отношения привода Uпр:</p>
         <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/U_pr.png" alt="передаточное отношение привода"></img>
@@ -344,7 +365,7 @@ class KinematicCompressorAnalysis extends React.Component {
     }
     return (
       <div className="kinCompressorAnalysis paragraph" onLoad={update}>
-        <h2>5.4 Кинематический анализ механизма компрессора</h2>
+        <h2>1.4 Кинематический анализ механизма компрессора</h2>
         <p>Скорость движения первого и второго ползуна может быть найдена по следующим формулам:</p>
         <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/VB.png" alt="скорость движения первого ползуна"></img>
         <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/VC.png" alt="скорость движения второго ползуна"></img>
@@ -459,7 +480,7 @@ class MomentsDetermination extends React.Component {
     const {F, result, TprCycle} = this.state
     return (
       <div className="momentsDetermination paragraph">
-        <h2>6.1 Определение приведенных моментов сил производственных сопротивлений</h2>
+        <h2>2.1 Определение приведенных моментов сил производственных сопротивлений</h2>
         <p>Силами производственных сопротивлений являются силы давления воздуха в цилиндрах компрессора на поршни при прямых и обратных ходах. Они характеризуются средним постоянным удельным давлением P.</p>
         <p>Сила постоянного давления F на поршень определяется по формуле:</p>
         <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/F.png" alt="сила постоянного давления"></img>
@@ -550,7 +571,7 @@ class EngineDetermination extends React.Component {
     const {Psp, Psd, Pel, engineName, P_engine, n, J, d} = this.state
     return (
       <div className="engineDetermination paragraph">
-        <h2>6.2 Определение мощности сил движущих и подбор электродвигателя</h2>
+        <h2>2.2 Определение мощности сил движущих и подбор электродвигателя</h2>
         <p>Мощность сил движущих определим по формуле:</p>
         <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/Psd.png" alt="мощность сил движущих"></img>
         <p>Где Pсп – мощность сил производственных сопротивлений, развиваемая поршнем компрессора:</p>
@@ -608,7 +629,7 @@ class ShaftDinamicCalculation extends React.Component {
     const {n_b, n_t, T1, T2} = this.state
     return (
       <div className="shaftDinamicCalculation paragraph">
-        <h2>6.3 Динамический расчет валов</h2>
+        <h2>2.3 Динамический расчет валов</h2>
         <p>Частота вращения быстроходного вала:</p>
         <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/n_b.png" alt="частота вращения быстроходного вала"></img>
         <p className="result">nб = {n_b[1]} об/мин</p>
@@ -710,7 +731,7 @@ class WorkingStressDetermination extends React.Component {
     const m_n_range = [(0.01 * a_w[1]).toFixed(3), (0.02 * a_w[1]).toFixed(3)];
     return (
       <div className="workingStressDetermination paragraph">
-        <h2>7.1 Определение допускаемых напряжений</h2>
+        <h2>3.1 Определение допускаемых напряжений</h2>
         <p>При расчетах параметров редуктора следует принимать:</p>
         <ul>
           <li>Материал зубчатых колес – сталь 45;</li>
@@ -849,7 +870,7 @@ class WheelsDetermination extends React.Component {
     const {d1, d2, d_a1, d_a2, d_b1, d_b2, b2, b1, psi_bd, v, K_H_beta, K_H_v, K_H_alpha, K_H, sigma_H, n_class} = this.state
     return (
       <div className="wheelsDetermination paragraph">
-        <h2>7.2 Основные размеры шестерни и колеса</h2>
+        <h2>3.2 Основные размеры шестерни и колеса</h2>
         <p>Диаметры делительные:</p>
         <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/d1.png" alt="диаметр шестерни"></img>
         <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/d2.png" alt="диаметр колеса"></img>
@@ -1027,6 +1048,12 @@ class BendingStress extends React.Component { //Допускаемое напр�
     })
   }
 
+  componentDidMount() {
+    for (let key in this.state) {
+      this.props.onUpdateParams(this.state[key][0], this.state[key][1]) //Передаем значения родителю
+    }
+  }
+
   render(){
     const {F_t, F_r, F_alpha, K_F_beta, K_F_v, K_F, z_v1, z_v2, Y_F1, Y_F2, Y_beta, K_F_alpha, sigma_F1, sigma_F2, sigma_F1_to_Y_F1, sigma_F2_to_Y_F2, sigma_F1_p, sigma_F2_p} = this.state
     const {psi_bd, v, n_class} = this.props.params
@@ -1066,13 +1093,13 @@ class BendingStress extends React.Component { //Допускаемое напр�
         <p>n – степень точности, n = {n_class};</p>
         <p className="result">KFα = {K_F_alpha[1]}</p>
         <p>Допускаемое напряжение на изгиб:</p>
-        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/sigma_F_permissible.png" alt="Допускаемое напряжение на изгиб"></img>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/sigma_F_permissible.png" alt="допускаемое напряжение на изгиб"></img>
         <p>При нормализации или улучшении стали 45 при твердости HB ≤ 350 σFlimb = 1.8 * HB, [SF] = 1.75.</p> {/*!!!УСОВЕРШЕНСТВОВАТЬ!!!*/}
         <p>Допускаемые напряжения для шестерни:</p>
         <p className="result">[σF1] = {sigma_F1[1]} МПа</p>
         <p>Для колеса:</p>
         <p className="result">[σF2] = {sigma_F2[1]} МПа</p>
-        <p className="textAndImage">Находим отношения</p><img className="inLineImg" src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/sigma_F_to_Y_F.png" alt="Отношение напряжения на изгиб к коэффициенту YF"></img>
+        <p className="textAndImage">Находим отношения</p><img className="inLineImg" src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/sigma_F_to_Y_F.png" alt="отношение напряжения на изгиб к коэффициенту YF"></img>
         <p>Для шестерни:</p>
         <p className="result">[σF1]/YF1 = {sigma_F1_to_Y_F1[1]}</p>
         <p>Для колеса:</p>
@@ -1080,18 +1107,476 @@ class BendingStress extends React.Component { //Допускаемое напр�
         {sigma_F1_to_Y_F1[1] > sigma_F2_to_Y_F2[1] ?
           <div>
             <p>Проверку на изгиб проводим для колеса, так как у него отношение [σF]/YF меньше.</p>
-            <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/sigma_F2.png" alt="Проверка на изгиб для колеса"></img>
+            <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/sigma_F2.png" alt="проверка на изгиб для колеса"></img>
             <p className="result">σF2 = {sigma_F2_p[1]} МПа</p>
             <p className="result">σF2 &lt; [σF2]</p> {/*!!!УСОВЕРШЕНСТВОВАТЬ!!!*/}
           </div> :
           <div>
             <p>Проверку на изгиб проводим для шестерни, так как у нее отношение [σF]/YF меньше.</p>
-            <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/sigma_F1.png" alt="Проверка на изгиб для шестерни"></img>
+            <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/sigma_F1.png" alt="проверка на изгиб для шестерни"></img>
             <p className="result">σF1 = {sigma_F1_p[1]} МПа</p>
             <p className="result">σF1 &lt; [σF1]</p> {/*!!!УСОВЕРШЕНСТВОВАТЬ!!!*/}
           </div>
         }
         <p>Условие прочности выполенено.</p>
+      </div>
+    )
+  }
+}
+
+class Belting extends React.Component {
+  constructor(props){
+    super(props)
+    const {P_engine, n, w1, U_rp} = this.props.params
+    const epsilon_belting = 0.015; //Скольжение ремня
+
+    let belt_section; //Сечение клинового ремня
+    const belt_section_power_array = [
+      [0, [200], ["Б", "А"]],
+      [3.15, [900], ["Б", "А"]],
+      [5, [400, 1250], ["В", "Б", "А"]],
+      [8, [500, 2000], ["В", "Б", "А"]],
+      [12.5, [300, 800, 3150], ["Г", "В", "Б", "А"]],
+      [20, [500, 1250, 3150], ["Г", "В", "Б", "А"]],
+      [31.5, [315, 800, 2000], ["Г", "В", "Б"]],
+      [50, [500, 1250], ["Г", "В"]],
+      [80, [800, 1250], ["Г", "В"]],
+      [125, [800], ["Д", "Г"]],
+      [200, [200], ["Д"]]
+    ];
+
+    const belt_section_n_array = (n_array, section_array) => {
+      for (let i = 0; i < n_array.length; i++) {
+        if (n <= n_array[i]) {
+          return section_array[i];
+        } else {
+          return section_array[section_array.length - 1];
+        }
+      }
+    }
+
+    for (let i = 0; i < belt_section_power_array.length; i++) {
+      if (i != 0) {
+        if (P_engine < (belt_section_power_array[i][0] + belt_section_power_array[i - 1][0]) / 2) {
+          belt_section = belt_section_n_array(belt_section_power_array[i - 1][1], belt_section_power_array[i - 1][2]);
+          break;
+        } else {
+          belt_section = belt_section_n_array(belt_section_power_array[i][1], belt_section_power_array[i][2]);
+        }
+      }
+    }
+
+    const w_engine = Number((n * 2 * Math.PI / 60).toFixed(3));
+    const T_belt = Number((P_engine * 1000 / w_engine).toFixed(3));
+    const d1_array_belt = [Number((3 * Math.pow(T_belt * 1000, 1/3)).toFixed()),
+                          Number((4 * Math.pow(T_belt * 1000, 1/3)).toFixed())];
+    let T0_belt;
+    let d1_min_belt;
+
+    switch (belt_section) {
+      case "А":
+        d1_min_belt = 90;
+        T0_belt = 8;
+        break;
+      case "Б":
+        T0_belt = 10.5;
+        d1_min_belt = 125;
+        break;
+      case "В":
+        d1_min_belt = 200;
+        T0_belt = 13.5;
+        break;
+      case "Г":
+        d1_min_belt = 315;
+        T0_belt = 19;
+        break;
+      case "Д":
+        d1_min_belt = 500;
+        T0_belt = 23.5;
+        break;
+      default:
+        d1_min_belt = 63;
+        T0_belt = 6;
+    }
+
+    const d1_P0_array_belt = { //Далее идет выбор диаметра d1 и номинальной мощности P0 по ГОСТ 1284.3-80
+      "А": [[0, 400, 800, 950, 1200, 1450, 1600, 2000],
+            [100, [0.5, 0.88, 1.01, 1.22, 1.41, 1.52, 1.65],
+                  [0.52, 0.91, 1.05, 1.25, 1.45, 1.57, 1.71],
+                  [0.53, 0.94, 1.08, 1.3, 1.50, 1.62, 1.76]],
+            [125, [0.71, 1.28, 1.47, 1.77, 2.06, 2.22, 2.42],
+                  [0.74, 1.32, 1.52, 1.83, 2.13, 2.29, 2.5],
+                  [0.76, 1.36, 1.57, 1.89, 2.19, 2.36, 2.58]],
+            [160, [1, 1.81, 2.09, 2.52, 2.92, 3.14, 3.61],
+                  [1.03, 1.87, 2.15, 2.6, 3.02, 3.24, 3.53],
+                  [1.07, 1.93, 2.22, 2.69, 3.11, 3.35, 3.64]],
+            [180, [1.16, 2.1, 2.43, 2.93, 3.38, 3.63, 3.94],
+                  [1.2, 2.17, 2.51, 3.03, 3.5, 3.75, 4.07],
+                  [1.24, 2.24, 2.59, 3.12, 3.61, 3.87, 4.19]]],
+
+      "Б": [[0, 400, 800, 950, 1200, 1450, 1600, 2000],
+            [140, [1.12, 1.95, 2.22, 2.64, 3.01, 3.21, 3.66],
+                  [1.16, 2.01, 2.3, 2.72, 3.1, 3.32, 3.78],
+                  [1.2, 2.08, 2.37, 2.82, 3.21, 3.42, 3.9]],
+            [180, [1.7, 3.01, 3.45, 4.11, 4.7, 5.01, 5.67],
+                  [1.76, 3.11, 3.56, 4.25, 4.85, 5.17, 5.86],
+                  [1.81, 3.21, 3.67, 4.38, 5.01, 5.34, 6.05]],
+            [224, [2.32, 4.13, 4.73, 5.63, 6.39, 6.77, 7.55],
+                  [2.4, 4.27, 4.89, 5.81, 6.6, 7, 7.8],
+                  [2.47, 4.4, 5.04, 6, 6.81, 7.22, 8.05]],
+            [280, [3.09, 5.49, 6.26, 7.42, 8.3, 8.69, 9.2],
+                  [3.19, 5.67, 6.47, 7.66, 8.57, 8.97, 9.5],
+                  [3.29, 5.85, 6.667, 7.91, 8.84, 9.26, 9.8]]
+            ],
+      "В": [[0, 400, 800, 950, 1200, 1450],
+            [224, [3.2, 5.47, 6.18, 7.18, 7.97],
+                  [3.31, 5.65, 6.38, 7.45, 8.23],
+                  [3.41, 5.83, 6.58, 7.69, 8.49]],
+            [280, [4.63, 8.04, 9.08, 10.49, 11.47],
+                  [4.78, 8.3, 9.37, 10.83, 11.84],
+                  [4.93, 8.57, 9.67, 11.17, 12.22]],
+            [355, [6.47, 11.19, 12.55, 14.23, 15.1],
+                  [6.69, 11.56, 12.95, 14.7, 15.59]
+                  [6.9, 11.92, 13.36, 15.16, 16.09]],
+            [450, [8.77, 14.76, 16.29, 17.75, 0],
+                  [9.05, 15.24, 16.82, 18.33, 0],
+                  [9.34, 15.72, 17.35, 18.91, 0]]],
+
+      "Г": [[0, 400, 800, 950, 1200, 1450],
+            [400, [12.25, 19.75, 21.46, 22.68, 0],
+                  [12.64, 20.4, 22.16, 23.42, 0],
+                  [13.04, 21.04, 22.86, 24.16, 0]],
+            [560, [20.27, 31.62, 33.21, 0, 0],
+                  [20.93, 32.65, 34.3, 0, 0],
+                  [21.59, 33.68, 35.38, 0, 0]],
+            [710, [27.23, 39.44, 38.9, 0, 0]
+                  [28.12, 40.73, 40.17, 0, 0],
+                  [20.01, 42.02, 41.44, 0, 0]]],
+
+      "Д": [[0, 400, 800, 950, 1200, 1450],
+            [560, [24.07, 31.62, 33.21, 0, 0],
+                  [24.85, 32.65, 34.3, 0, 0],
+                  [25.64, 33.68, 35.38, 0, 0]],
+            [710, [34.05, 39.44, 38.9, 0, 0],
+                  [35.17, 40.73, 40.17, 0, 0],
+                  [36.28, 42.08, 41.44, 0, 0]]]
+
+    }
+
+    let d1_P0_belt = d1_P0_array_belt[belt_section];
+
+    let n_i_belt
+    for (let i = 0; i < d1_P0_belt[0].length; i++) {
+      if (n < d1_P0_belt[0][i] + 100) {
+        if (n < (d1_P0_belt[0][i] + d1_P0_belt[0][i - 1]) / 2) {
+          n_i_belt = i - 2;
+          break;
+        } else {
+          n_i_belt = i - 1;
+          break;
+        }
+      }
+    }
+
+    let d1_i_belt
+    for (let i = 1; i < d1_P0_belt.length; i++) {
+      if (d1_array_belt[0] < d1_P0_belt[i][0]) {
+        d1_i_belt = i;
+        break;
+      } else {
+        d1_i_belt = i;
+      }
+    }
+
+    let U_rp_i_belt
+    if (U_rp <= 1.2) {
+      U_rp_i_belt = 1;
+    } else if (U_rp < 3) {
+      U_rp_i_belt = 2;
+    } else {
+      U_rp_i_belt = 3;
+    }
+
+    const d1_belt = d1_P0_belt[d1_i_belt][0]; //Диаметр меньшего шкива
+    const P0_belt = d1_P0_belt[d1_i_belt][U_rp_i_belt][n_i_belt]; //Номинальная мощность
+
+    const d2_array_belt = [40, 45, 50, 56, 63, 71, 80, 90, 100, 112, 125, 140,
+    160, 180, 200, 224, 250, 280, 315, 335, 400, 450, 500, 560, 630, 710, 800,
+    900, 1000, 1120, 1250, 1400, 1600, 1800, 2000];
+
+    const d2_before_belt = Number((U_rp * d1_belt * (1 - epsilon_belting)).toFixed())
+    let d2_belt = d2_before_belt;
+
+    for (let i = 0; i < d2_array_belt.length; i++) {
+      if (d2_belt < d2_array_belt[i]) {
+
+        if (d2_belt < (d2_array_belt[i] + d2_array_belt[i - 1]) / 2) {
+          d2_belt = d2_array_belt[i - 1];
+          break;
+        } else {
+          d2_belt = d2_array_belt[i];
+          break;
+        }
+      }
+    }
+
+    const U_rp_belt = Number((d2_belt / (d1_belt * (1 - epsilon_belting))).toFixed(3));
+    const w1_belt = Number((w_engine / U_rp_belt).toFixed(3));
+
+    const a_min_belt = Number((0.55 * (d1_belt + d2_belt) + T0_belt).toFixed());
+    const a_max_belt = Number((d1_belt + d2_belt).toFixed());
+
+    let a_before_belt = a_max_belt;
+
+    while (a_before_belt % 100 != 0) {
+      a_before_belt -= 5;
+    }
+
+    const L_before_belt = Number((2 * a_before_belt + 0.5 * Math.PI * (d1_belt + d2_belt) + Math.pow(d2_belt - d1_belt, 2) / (4 * a_before_belt)).toFixed());
+    let L_belt = L_before_belt;
+
+    const L_array_belt = [400, 450, 500, 560, 630, 710, 800, 900, 1000, 1120,
+    1400, 1600, 1800, 2000, 2240, 2500, 2800, 3150, 3550, 4000, 4500, 5000,
+    5600, 6300, 7100, 8000, 9000, 10000, 11200, 12500, 14000, 16000, 18000];
+
+    for (let i = 0; i < L_array_belt.length; i++) {
+      if (L_belt < L_array_belt[i]) {
+        L_belt = L_array_belt[i];
+        break;
+      }
+    }
+
+    const w_belt = Number((0.5 * Math.PI * (d1_belt + d2_belt)).toFixed());
+    const y_belt = Number((Math.pow(d2_belt - d1_belt, 2)).toFixed());
+    const a_r_belt = Number((0.25 * ((L_belt - w_belt) + Math.pow(Math.pow(L_belt - w_belt, 2) - 2 * y_belt, 1 / 2))).toFixed());
+
+    const alpha1_belt = Number((180 - 57 * ((d2_belt - d1_belt) / a_r_belt)).toFixed());
+
+    const C_p_belt = 1.2; //!!!УСОВЕРШЕНСТВОВАТЬ!!!
+    const C_L_array_belt = {
+      "А": [[560, 0.79], [710, 0.83], [900, 0.87], [1000, 0.9], [1250, 0.93],
+            [1500, 0.98], [1800, 1.01], [2000, 1.03], [2240, 1.06],
+            [2500, 1.09], [2800, 1.11], [3150, 1.13], [4000, 1.17]],
+      "Б": [[900, 0.82], [1000, 0.85], [1250, 0.88], [1500, 0.92], [1800, 0.95],
+            [2000, 0.98], [2240, 1], [2500, 1.03], [2800, 1.05],
+            [3150, 1.07], [4000, 1.13], [4750, 1.17], [5300, 1.19],
+            [6300, 1.23]],
+      "В": [[1800, 0.86], [2000, 0.88], [2240, 0.91], [2500, 0.93],
+            [2800, 0.95], [3150, 0.97], [4000, 1.02], [4750, 1.06],
+            [5300, 1.08], [6300, 1.12], [7500, 1.16], [9000, 1.21],
+            [10000, 1.23]],
+      "Г": [[3150, 0.86], [4000, 0.91], [4750, 0.95], [5300, 0.97],
+            [6300, 1.01], [7500, 1.05], [9000, 1.09], [10000, 1.11]],
+      "Д": [[4750, 0.91] ,[5300, 0.94], [6300, 0.97], [7500, 1.01],
+            [9000, 1.05], [10000, 1.07]]
+    }
+
+    let C_L_section = C_L_array_belt[belt_section];
+    let C_L_belt = 1;
+    for (let i = 0; i < C_L_section.length; i++) {
+      if (L_belt === C_L_section[i][0]) {
+        C_L_belt = C_L_section[i][1];
+        break;
+      }
+    }
+
+    const C_z_belt = 0.85; //!!!УСОВЕРШЕНСТВОВАТЬ!!!
+    const C_alpha_array_belt = [[180, 1], [160, 0.95], [140, 0.89], [120, 0.82],
+                            [100, 0.83], [90, 0.68], [70, 0.56], [0, 0]];
+    let C_alpha_belt = 1;
+    for (let i = 0; i < C_alpha_array_belt.length; i++) {
+      if (C_alpha_array_belt[i][0] < alpha1_belt) {
+        if ((C_alpha_array_belt[i][0] + C_alpha_array_belt[i - 1][0]) / 2 < alpha1_belt) {
+          C_alpha_belt = C_alpha_array_belt[i - 1][1];
+          break;
+        } else {
+          C_alpha_belt = C_alpha_array_belt[i][1];
+          break;
+        }
+      }
+    }
+
+    const z_before_belt = Number(((P_engine * C_p_belt) / (P0_belt * C_L_belt * C_alpha_belt * C_z_belt)).toFixed(3));
+    const z_belt = Number((z_before_belt).toFixed());
+
+    const v_belt = Number((0.5 * w_engine * d1_belt / 1000).toFixed(3));
+    const teta_array_belt = {
+      "А": 0.1,
+      "Б": 0.18,
+      "В": 0.3,
+      "Г": 0.6,
+      "Д": 0.9
+    }
+    const teta_belt = teta_array_belt[belt_section]
+    const F0_belt = Number((((850 * P_engine * C_L_belt * C_p_belt) / (z_belt * v_belt * C_alpha_belt)) + teta_belt * Math.pow(v_belt, 2)).toFixed());
+    const F_v_belt = Number((2 * F0_belt * z_belt * Math.sin(alpha1_belt * Math.PI / (2 * 180))).toFixed())
+
+    const e_f_belt_array = {
+      "А": [15, 10],
+      "Б": [19, 12.5],
+      "В": [25.5, 17],
+      "Г": [37, 24],
+      "Д": [41.5, 29]
+    }
+
+    const e_belt = e_f_belt_array[belt_section][0];
+    const f_belt = e_f_belt_array[belt_section][1];
+    const B_belt = Number(((z_belt - 1) * e_belt + 2 * f_belt).toFixed());
+
+    this.state = ({
+      epsilon_belting: ["epsilon_belting", epsilon_belting],
+      belt_section: ["belt_section", belt_section],
+      T_belt: ["T_belt", T_belt],
+      d1_array_belt: ["d1_array_belt", d1_array_belt],
+      d1_min_belt: ["d1_min_belt", d1_min_belt],
+      d1_belt: ["d1_belt", d1_belt],
+      P0_belt: ["P0_belt", P0_belt],
+      d2_before_belt: ["d2_before_belt", d2_before_belt],
+      d2_belt: ["d2_belt", d2_belt],
+      U_rp_belt: ["U_rp_belt", U_rp_belt],
+      w1_belt: ["w1_belt", w1_belt],
+      T0_belt: ["T0_belt", T0_belt],
+      a_min_belt: ["a_min_belt", a_min_belt],
+      a_max_belt: ["a_max_belt", a_max_belt],
+      a_before_belt: ["a_before_belt", a_before_belt],
+      L_before_belt: ["L_before_belt", L_before_belt],
+      L_belt: ["L_belt", L_belt],
+      w_belt: ["w_belt", w_belt],
+      y_belt: ["y_belt", y_belt],
+      a_r_belt: ["a_r_belt", a_r_belt],
+      alpha1_belt: ["alpha1_belt", alpha1_belt],
+      C_p_belt: ["C_p_belt", C_p_belt],
+      C_L_belt: ["C_L_belt", C_L_belt],
+      C_z_belt: ["C_z_belt", C_z_belt],
+      C_alpha_belt: ["C_alpha_belt", C_alpha_belt],
+      z_before_belt: ["z_before_belt", z_before_belt],
+      z_belt: ["z_belt", z_belt],
+      v_belt: ["v_belt", v_belt],
+      teta_belt: ["teta_belt", teta_belt],
+      F0_belt: ["F0_belt", F0_belt],
+      F_v_belt: ["F_v_belt", F_v_belt],
+      e_belt: ["e_belt", e_belt],
+      f_belt: ["f_belt", f_belt],
+      B_belt: ["B_belt", B_belt]
+    })
+  }
+
+  render() {
+    const {P_engine, n, w1, U_rp} = this.props.params
+    const {epsilon_belting, belt_section, T_belt, d1_array_belt, d1_min_belt,
+    P0_belt, d1_belt, d2_belt, d2_before_belt, U_rp_belt, w1_belt, a_min_belt,
+    a_max_belt, T0_belt, a_before_belt, L_before_belt, L_belt, w_belt, y_belt,
+    a_r_belt, alpha1_belt, C_p_belt, C_L_belt, C_z_belt, C_alpha_belt, z_belt,
+    z_before_belt, v_belt, teta_belt, F0_belt, F_v_belt, e_belt, f_belt,
+    B_belt} = this.state
+
+    const P0_L_belt = {
+      "А": 1700,
+      "Б": 2240,
+      "В": 3750,
+      "Г": 6000,
+      "Д": 7100
+    }
+    return (
+      <div className="belting paragraph">
+        <h2>4 Расчет клино-ременной передачи</h2>
+        <p>Исходные данные для расчета: передаваемая мощность P = {P_engine} кВт;
+        частота вращения ведущего (меньшего) шкива nдв = {n} об/мин;
+        передаточное отношение Uрп = {U_rp};
+        скольжение ремня ε = {epsilon_belting[1]}.</p>
+        <p>При заданной мощности и частоте вращения принимаем сечение клинового ремня {belt_section[1]}</p>
+        <p>Вращающий момент:</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/T_belt.png" alt="вращающий момент ременной передачи"></img>
+        <p className="result">T = {T_belt[1]} Н*м = {T_belt[1]} * 10^3 Н*мм</p>
+        <p>Диаметр меньшего шкива:</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/d1_belt.png" alt="диаметр меньшего шкива"></img>
+        <p className="result">d1 = {d1_array_belt[1][0]} ÷ {d1_array_belt[1][1]} мм</p>
+        <p>С учетом того, что диаметр шкива для ремней сечения {belt_section[1]} не должен быть менее {d1_min_belt[1]} мм принимаем d1 = {d1_belt[1]} мм.</p>
+        <p>Диаметр большего шкива:</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/d2_belt.png" alt="диаметр большего шкива"></img>
+        <p className="result">d2 = {d2_before_belt[1]} мм</p>
+        <p>Принимаем d2 = {d2_belt[1]} мм.</p>
+        <p>Уточняем передаточное отношение:</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/U_rp_belt.png" alt="передаточное отношение ременной передачи"></img>
+        <p className="result">Uрп = {U_rp_belt[1]}</p>
+        <p>При этом угловая скорость ведомого вала редуктора будет:</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/w1_belt.png" alt="угловая скорость ведомого вала"></img>
+        <p className="result">ω1 = {w1_belt[1]} рад/с</p>
+        <p>Расхождение с тем, что было получено по первоначальному расчету - {(100 - Math.abs(w1 / w1_belt[1]) * 100).toFixed(3)}% что менее допускаемого на ±3 %.</p> {/*!!!УСОВЕРШЕНСТВОВАТЬ!!!*/}
+        <p>Следовательно, окончательно принимаем диаметры шкивов d1 = {d1_belt[1]} мм и d2 = {d2_belt[1]} мм.</p>
+        <p>Межосевое расстояние aр следует принять в интервале:</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/a_min_belt.png" alt="минимальное межосевое расстояние"></img>
+        <p className="result">aр min = {a_min_belt[1]} мм</p>
+        <p>Где T0 = {T0_belt[1]} мм - высота сечения ремня;</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/a_max_belt.png" alt="максимальное межосевое расстояние"></img>
+        <p className="result">aр max = {a_max_belt[1]} мм</p>
+        <p>Принимаем предварительно близкое значение aр = {a_before_belt[1]} мм.</p>
+        <p>Расчетная длина ремня:</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/L_belt.png" alt="расчетная длина ремня"></img>
+        <p className="result">L = {L_before_belt[1]} мм</p>
+        <p>Ближайшее значение по стандарту L = {L_belt[1]} мм.</p>
+        <p>Уточняем значение межосевого расстояния aр с учетом стандартной длины ремня L:</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/a_r_belt.png" alt="межосевое расстояние"></img>
+        <p>где</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/w_belt.png" alt="расстояние w"></img>
+        <p className="result">w = {w_belt[1]} мм</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/y_belt.png" alt="расстояние y"></img>
+        <p className="result">y = {y_belt[1]} мм</p>
+        <p>Отсюда:</p>
+        <p className="result">aр = {a_r_belt[1]} мм</p>
+        <p>При монтаже передачи необходимо обеспечить возможность уменьшения
+        межосевого расстояния на 0,01L = {L_belt[1] * 0.01} мм для облегчения
+        надевания ремней на шкивы и возможность увеличения его на 0,025L =
+        {L_belt[1] * 0.025} мм для увеличения натяжения ремней.</p>
+        <p>Угол обхвата меньшего шкива:</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/alpha1_belt.png" alt="угол обхвата меньшего шкива"></img>
+        <p className="result">α1 = {alpha1_belt[1]}°</p>
+        <p>Коэффициент режима работы, учитывающий условия эксплуатации передачи:</p>
+        <p>- для привода к скребковому конвейеру при односменной работе Cр = {C_p_belt[1]}.</p>
+        <p>Коэффициент, учитывающий влияние длины ремня:</p>
+        <p>- для ремня сечения {belt_section[1]} при длине L = {L_belt[1]} мм коэффициент CL = {C_L_belt[1]}.</p>
+        <p>Коэффициент, учитывающий влияние угла обхвата:</p>
+        <p>- при α1 = {alpha1_belt[1]}° коэффициент Cα = {C_alpha_belt[1]}.</p>
+        <p>Коэффициент, учитывающий число ремней в передаче:</p>
+        <p>- предполагая, что число ремней в передаче будет свыше 6, примем коэффициент Cz = {C_z_belt[1]}</p> {/*!!!УСОВЕРШЕНСТВОВАТЬ!!!*/}
+        <p>Число ремней в передаче:</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/z_belt.png" alt="число ремней в передаче"></img>
+        <p>где P0 – мощность, передаваемая одним клиновым ремнем, кВт;</p>
+        <p>Для ремня сечения {belt_section[1]} при длине L =
+        {P0_L_belt[belt_section[1]]} мм, работе на шкиве d1= {d1_belt[1]} мм и
+        Uрп = {U_rp} мощность P0 = {P0_belt[1]} кВт (то, что в нашем случае
+        ремень имеет другую длину L = {L_belt[1]} мм, учитывается
+        коэффициентом 𝐶𝐿);</p>
+        <p className="result">z = {z_before_belt[1]}</p>
+        <p>Принимаем z = {z_belt[1]}.</p>
+        <p>Натяжение ветви клинового ремня:</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/F0_belt.png" alt="натяжение ветви клинового ремня"></img>
+        <p>где скорость:</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/v_belt.png" alt="скорость ремня"></img>
+        <p className="result">v = {v_belt[1]} м/с</p>
+        <p>θ – коэффициент, учитывающий влияние центробежных сил, для ремня сечения {belt_section[1]} θ = {teta_belt[1]} Н*с^2/м^2;</p>
+        <p>Тогда:</p>
+        <p className="result">F0 = {F0_belt[1]} Н</p>
+        <p>Давление на валы:</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/F_v_belt.png" alt="давление на валы"></img>
+        <p className="result">Fв = {F_v_belt[1]} Н</p>
+        <p>Ширина шкивов:</p>
+        <img src="https://raw.githubusercontent.com/a-real-human-bean/images/master/gear%D0%A1alculation/images/B_belt.png" alt="ширина шкивов"></img>
+        <p>Для ремня сечения {belt_section[1]} e = {e_belt[1]} и f = {f_belt[1]};</p>
+        <p className="result">Вш = {B_belt[1]} мм</p>
+      </div>
+    )
+  }
+}
+
+
+
+
+class Footer extends React.Component {
+  render() {
+    return (
+      <div className="footer">
+        <p className="footer-text result">&copy; Калинин С.А. 2019</p>
       </div>
     )
   }
@@ -1103,6 +1588,7 @@ class App extends React.Component {
       <React.Fragment>
         <Header />
         <Main />
+        <Footer />
       </React.Fragment>
     )
   }
